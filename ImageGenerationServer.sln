@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGenerationServer", "ImageGenerationServer\ImageGenerationServer.csproj", "{1A864EA2-FCF8-492D-8157-5BA00D5AB448}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGenerationServer.UT", "ImageGenerationServer.UT\ImageGenerationServer.UT.csproj", "{98D29DC0-0C96-404E-A79C-568CA0308B14}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A864EA2-FCF8-492D-8157-5BA00D5AB448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A864EA2-FCF8-492D-8157-5BA00D5AB448}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A864EA2-FCF8-492D-8157-5BA00D5AB448}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A864EA2-FCF8-492D-8157-5BA00D5AB448}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98D29DC0-0C96-404E-A79C-568CA0308B14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98D29DC0-0C96-404E-A79C-568CA0308B14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98D29DC0-0C96-404E-A79C-568CA0308B14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98D29DC0-0C96-404E-A79C-568CA0308B14}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
