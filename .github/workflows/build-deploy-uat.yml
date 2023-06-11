@@ -34,7 +34,7 @@ jobs:
     - uses: kzrnm/get-net-sdk-project-versions-action@v1
       id: get-version
       with:
-        proj-path: ImageGenerationServer.csproj
+        proj-path: ImageGenerationServer/ImageGenerationServer.csproj
     - name: Set docker image tag env variable
       run: |
         echo "DOCKER_IMAGE_TAG=${{ env.steps.get-version.outputs.version }}.${{ github.run_number }}" >> $GITHUB_ENV
@@ -48,7 +48,7 @@ jobs:
       with:
         push: true
         context: .
-        file: Dockerfile
+        file: ImageGenerationServer/Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
     outputs:
