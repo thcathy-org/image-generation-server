@@ -24,9 +24,6 @@ jobs:
       run: dotnet test --no-build --verbosity normal
   docker-build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./ImageGenerationServer
     needs: [build-test]
     if: github.ref == 'refs/heads/main'
     steps:
@@ -47,7 +44,7 @@ jobs:
     - uses: docker/build-push-action@v3
       with:
         push: true
-        context: .
+        context: ./ImageGenerationServer
         file: ImageGenerationServer/Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
