@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
     
-env:
-  ReplicateAiServiceOptions__Token: ${{ secrets.ReplicateAiServiceOptions__Token }}
-  GoogleApplicationCredentials: ${{ secrets.GoogleApplicationCredentials }}
-  ApiKeyMiddlewareOptions__ApiKeys: ${{ secrets.ApiKeyMiddlewareOptions__ApiKeys }}
-
 jobs:
   build-test:
     runs-on: ubuntu-latest
