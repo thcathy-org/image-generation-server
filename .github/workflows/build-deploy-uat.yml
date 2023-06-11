@@ -42,7 +42,6 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - uses: docker/build-push-action@v3
-      working-directory: ./ImageGenerationServer
       with:
         push: true
         context: ./ImageGenerationServer
