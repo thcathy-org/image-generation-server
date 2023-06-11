@@ -42,10 +42,11 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - uses: docker/build-push-action@v3
+      working-directory: ./ImageGenerationServer
       with:
         push: true
         context: ./ImageGenerationServer
-        file: ImageGenerationServer/Dockerfile
+        file: Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
     outputs:
