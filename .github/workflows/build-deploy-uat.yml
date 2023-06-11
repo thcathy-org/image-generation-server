@@ -1,0 +1,55 @@
+name: build and deploy to UAT
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+  docker-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ImageGenerationServer
+    needs: [build-test]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+    - uses: kzrnm/get-net-sdk-project-versions-action@v1
+      id: get-version
+      with:
+        proj-path: ImageGenerationServer/ImageGenerationServer.csproj
+    - name: Set docker image tag env variable
+      run: |
+        echo "DOCKER_IMAGE_TAG=${{ env.steps.get-version.outputs.version }}.${{ github.run_number }}" >> $GITHUB_ENV
+    - uses: docker/setup-qemu-action@v2
+    - uses: docker/setup-buildx-action@v2
+    - uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - uses: docker/build-push-action@v3
+      with:
+        push: true
+        context: .
+        file: ImageGenerationServer/Dockerfile
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
+        platforms: linux/amd64,linux/arm64
+    outputs:
+      docker_image_tag: ${{ env.DOCKER_IMAGE_TAG }}
