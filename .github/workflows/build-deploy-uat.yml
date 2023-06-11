@@ -45,7 +45,7 @@ jobs:
       with:
         push: true
         context: ./ImageGenerationServer
-        file: Dockerfile
+        file: ImageGenerationServer/Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
     outputs:
