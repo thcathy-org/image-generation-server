@@ -9,7 +9,7 @@ namespace ImageGenerationServer.Services;
 
 public class ReplicateAiServiceOptions
 {
-    public string BaseUrl { get; init; }
+    public string? BaseUrl { get; init; }
     public string? Token { get; init; }
 }
 
@@ -22,7 +22,7 @@ public class ReplicateAiService : IReplicateAiService
 {
     private const string BasePrompt = "clip art";
     private const string BaseNegativePrompt = "english characters, alphabet, realistic";
-    private static readonly TimeSpan timeout = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(1);
 
     private readonly ReplicateAiServiceOptions _options;
     private readonly HttpClient _httpClient;
@@ -87,7 +87,7 @@ public class ReplicateAiService : IReplicateAiService
     private async ValueTask<List<string>> PollResult(string id)
     {
         var startTime = DateTime.Now;
-        while (DateTime.Now - startTime < timeout)
+        while (DateTime.Now - startTime < Timeout)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/{id}");
             request.Headers.Add("Authorization", $"Token {_options.Token}");
