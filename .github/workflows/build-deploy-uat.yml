@@ -47,6 +47,6 @@ jobs:
         context: ./ImageGenerationServer
         file: ImageGenerationServer/Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
     outputs:
       docker_image_tag: ${{ env.DOCKER_IMAGE_TAG }}
