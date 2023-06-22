@@ -21,6 +21,7 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("LocalDatabase")));
+builder.Services.AddHealthChecks().AddDbContextCheck<DataContext>();
 
 // builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
@@ -49,5 +50,7 @@ app.UseAuthorization();
 app.UseMiddleware<ApiKeyMiddleware>();
 
 app.MapControllers();
+
+app.MapHealthChecks("/healthz");
 
 app.Run();

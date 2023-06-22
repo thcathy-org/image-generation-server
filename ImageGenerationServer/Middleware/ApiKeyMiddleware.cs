@@ -9,6 +9,8 @@ public class ApiKeyMiddlewareOptions
     public string ApiKeyHeaderName { get; set; } = string.Empty;
     public string ApiKeys { get; set; } = string.Empty;
 }
+
+// will be deprecated after using JWT
 public class ApiKeyMiddleware
 {
     private readonly RequestDelegate _next;
@@ -24,6 +26,12 @@ public class ApiKeyMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        if (!context.Request.Path.StartsWithSegments("/image"))
+        {
+            await _next(context);
+            return;
+        }
+        
         string? apiKey = context.Request.Headers[_apiKeyHeaderName];
         
         if (!_apiKeys.Contains(apiKey))
