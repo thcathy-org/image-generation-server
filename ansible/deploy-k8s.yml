@@ -46,6 +46,7 @@
           stringData:
             ApiKeyMiddlewareOptions__ApiKeys: "{{ APIKEYMIDDLEWAREOPTIONS__APIKEYS }}"
             ReplicateAiServiceOptions__Token: "{{ ReplicateAiServiceOptions__Token }}"
+          data:
             GOOGLE_APPLICATION_CREDENTIALS_JSON: "{{ GOOGLE_APPLICATION_CREDENTIALS_JSON }}"
 
     - name: apply k8s manifest
