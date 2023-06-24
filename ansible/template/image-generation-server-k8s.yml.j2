@@ -34,6 +34,8 @@ spec:
         - name: secret-volume
           mountPath: /etc/secretvolume
           readOnly: true
+        - name: data-volume
+          mountPath: /data
         ports:
         - containerPort: 80
         readinessProbe:
@@ -46,6 +48,9 @@ spec:
       - name: secret-volume
         secret:
           secretName: {{ app_name }}-secrets
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: {{ app_name }}-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -93,3 +98,15 @@ spec:
             name: {{ app_name }}-service
             port:
               name: http
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ app_name }}-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 0.5Gi

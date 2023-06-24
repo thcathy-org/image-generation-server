@@ -13,4 +13,4 @@
 - name: check rest response
   fail:
     msg: "{{ result }}"
-  when: result.json[0] is not defined
+  when: result.content is not defined
