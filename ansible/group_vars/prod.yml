@@ -3,3 +3,4 @@ deploy_folder: /home/ubuntu/k3s
 namespace: image-generation-server
 url_base_path: image-generation-server
 volume_root: /home/ubuntu/k3s/volumes
+dotnet_env: Production

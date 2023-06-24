@@ -3,3 +3,4 @@ deploy_folder: /home/ubuntu/k3s
 namespace: image-generation-server-uat
 url_base_path: image-generation-server-uat
 volume_root: /home/ubuntu/k3s/volumes
+dotnet_env: UAT
