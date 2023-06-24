@@ -67,7 +67,7 @@ jobs:
             -e docker_image_tag=${{ needs.docker-build.outputs.docker_image_tag }}
             -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
             -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
-            -e GOOGLE_APPLICATION_CREDENTIALS_JSON='${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}'
+            -e "GOOGLE_APPLICATION_CREDENTIALS_JSON='${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}'"
 #      - name: Run ansible playbook to deploy and verify k8s PROD
 #        uses: dawidd6/action-ansible-playbook@v2
 #        with:
