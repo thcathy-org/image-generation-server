@@ -29,18 +29,23 @@ spec:
               name: {{ app_name }}-secrets
               key: ReplicateAiServiceOptions__Token
         - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /etc/gcp/google-application-credentials.json
+          value: /etc/secretvolume/GOOGLE_APPLICATION_CREDENTIALS_JSON
         volumeMounts:
-        - name: google-application-credentials-volume
-          mountPath: /etc/gcp
+        - name: secret-volume
+          mountPath: /etc/secretvolume
+          readOnly: true
         ports:
         - containerPort: 80
         readinessProbe:
           httpGet:
-            path: /healthz/ready
+            path: /healthz
             port: 80
           initialDelaySeconds: 30
           timeoutSeconds: 1
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: {{ app_name }}-secrets
 ---
 apiVersion: v1
 kind: Service
@@ -57,7 +62,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: {{ app-name }}-prefix-remover
+  name: {{ app_name }}-prefix-remover
 spec:
   stripPrefix:
     prefixes:
@@ -71,10 +76,10 @@ metadata:
     kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: {{ namespace }}-{{ app-name }}-prefix-remover@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: {{ namespace }}-{{ app_name }}-prefix-remover@kubernetescrd
 spec:
   tls:
-  - secretName: {{ app-name }}-tls
+  - secretName: {{ app_name }}-tls
     hosts:
       - {{ inventory_hostname }}
   rules:
@@ -85,17 +90,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ app-name }}-service
+            name: {{ app_name }}-service
             port:
               name: http
----
-apiVersion: v1
-kind: Volume
-metadata:
-  name: google-application-credentials-volume
-type: Secret
-secret:
-  secretName: {{ app-name }}-secrets
-  items:
-  - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
-    path: google-application-credentials.json

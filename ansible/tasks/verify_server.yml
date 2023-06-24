@@ -1,7 +1,7 @@
 ---
 - name: check server is responding
   uri:
-    url: "https://{{ inventory_hostname }}/{{ app_name }}/healthz"
+    url: "https://{{ inventory_hostname }}/{{ namespace }}/healthz"
     return_content: yes
     status_code: 200
     body_format: json

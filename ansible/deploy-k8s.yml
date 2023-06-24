@@ -43,10 +43,10 @@
           metadata:
             name: "{{ app_name }}-secrets"
             namespace: "{{ namespace }}"
-          data: |
-            APIKEYMIDDLEWAREOPTIONS__APIKEYS: "{{ APIKEYMIDDLEWAREOPTIONS__APIKEYS | b64encode }}"
-            ReplicateAiServiceOptions__Token: "{{ ReplicateAiServiceOptions__Token | b64encode }}"
-            GOOGLE_APPLICATION_CREDENTIALS_JSON: "{{ GOOGLE_APPLICATION_CREDENTIALS_JSON | b64encode }}"
+          stringData:
+            ApiKeyMiddlewareOptions__ApiKeys: "{{ APIKEYMIDDLEWAREOPTIONS__APIKEYS }}"
+            ReplicateAiServiceOptions__Token: "{{ ReplicateAiServiceOptions__Token }}"
+            GOOGLE_APPLICATION_CREDENTIALS_JSON: "{{ GOOGLE_APPLICATION_CREDENTIALS_JSON }}"
 
     - name: apply k8s manifest
       k8s:
