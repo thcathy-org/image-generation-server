@@ -62,19 +62,23 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           vault_password: ${{ secrets.VAULT_PASSWORD }}
           options: |
-            --inventory ansible/inventory_uat
+            --inventory ansible/inventory
             --limit uat
             -e docker_image_tag=${{ needs.docker-build.outputs.docker_image_tag }}
             -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
             -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
             -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
-#      - name: Run ansible playbook to deploy and verify k8s PROD
-#        uses: dawidd6/action-ansible-playbook@v2
-#        with:
-#          playbook: ansible/deploy-k8s.yml
-#          key: ${{ secrets.SSH_PRIVATE_KEY }}
-#          vault_password: ${{ secrets.VAULT_PASSWORD }}
-#          options: |
-#            --inventory ansible/inventory_k8s-prod
-#            --limit prod
-#            -e docker_image_tag=${{ needs.docker-build.outputs.docker_image_tag }}
+      - name: Run ansible playbook to deploy and verify k8s PROD
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: ansible/deploy-k8s.yml
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          vault_password: ${{ secrets.VAULT_PASSWORD }}
+          options: |
+            --inventory ansible/inventory
+            --limit prod
+            --skip-tags verify-uat
+            -e docker_image_tag=${{ needs.docker-build.outputs.docker_image_tag }}
+            -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
+            -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
+            -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}

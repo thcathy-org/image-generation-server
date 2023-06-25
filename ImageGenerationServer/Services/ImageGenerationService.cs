@@ -56,6 +56,7 @@ public partial class ImageGenerationService : BackgroundService
             {
                 var context = scope.ServiceProvider.GetService<DataContext>();
                 context!.PendingVerifyPhrases.Add(new PendingVerifyPhrase(phrase));
+                Log.Information("Add {Phrase} to pending verify", phrase);
             }
 
             var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(base64Images))); 

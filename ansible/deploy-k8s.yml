@@ -64,4 +64,9 @@
       delay: 30
 
     - name: verify server is started
-      include_tasks: tasks/verify_server.yml
+      tags: verify
+      include_tasks: tasks/verify_server_started.yml
+
+    - name: verify image generate
+      tags: verify-uat
+      include_tasks: tasks/verify_image_generate.yml

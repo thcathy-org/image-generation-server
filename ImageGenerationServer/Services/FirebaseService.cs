@@ -48,7 +48,8 @@ public class FirebaseService : IFirebaseService
         var objectName = GetObjectName(filename);
         try
         {
-            storage.UploadObject(_options.BucketName, objectName, null, source);    
+            storage.UploadObject(_options.BucketName, objectName, null, source);
+            Log.Information("{ObjectName} uploaded to {Bucket}", objectName, _options.BucketName);
         } catch (Exception e)
         {
             Log.Error(e, "Error when upload {ObjectName}", objectName);

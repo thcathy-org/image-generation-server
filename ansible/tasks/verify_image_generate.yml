@@ -1,0 +1,24 @@
+---
+- name: Generate a random string with all lower case characters
+  set_fact:
+    random_string: "{{ lookup('community.general.random_string', upper=false, numbers=false, special=false) }}"
+  tags: verify-uat
+- name: submit image generation request
+  uri:
+    url: "https://{{ inventory_hostname }}/{{ namespace }}/image/generate/test-{{random_string}}"
+    method: POST
+    headers:
+      X-API-KEY: "{{APIKEYMIDDLEWAREOPTIONS__APIKEYS}}"
+    return_content: yes
+    status_code: 200
+  tags: verify-uat
+- name: check image is generated
+  uri:
+    url: "https://firebasestorage.googleapis.com/v0/b/{{firebase_bucket}}/o/{{firebase_folder}}%2Fte%2Ftest-{{random_string}}.json?alt=media"
+    return_content: yes
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 20
+  delay: 10
+  tags: verify-uat
