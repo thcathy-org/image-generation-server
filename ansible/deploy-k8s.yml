@@ -2,9 +2,6 @@
 - hosts: all
 
   tasks:
-    - debug: var=vars
-    - debug: var=hostvars
-
     - name: create deployment directory
       file:
         path: "{{ deploy_folder }}/{{ namespace }}"
