@@ -28,13 +28,13 @@ spec:
             secretKeyRef:
               name: {{ app_name }}-secrets
               key: ReplicateAiServiceOptions__Token
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /etc/secretvolume/GOOGLE_APPLICATION_CREDENTIALS_JSON
+        - name: GoogleApplicationCredentials
+          value: /etc/secret-volume/GOOGLE_APPLICATION_CREDENTIALS_JSON
         - name: DOTNET_ENVIRONMENT
           value: {{ dotnet_env }}
         volumeMounts:
         - name: secret-volume
-          mountPath: /etc/secretvolume
+          mountPath: /etc/secret-volume
           readOnly: true
         - name: data-volume
           mountPath: /data
