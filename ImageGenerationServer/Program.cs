@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
+Log.Information("Logger setup completed");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +44,7 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
