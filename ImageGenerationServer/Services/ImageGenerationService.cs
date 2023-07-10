@@ -8,9 +8,14 @@ using Serilog;
 
 namespace ImageGenerationServer.Services;
 
+public class ImagesObject
+{
+    public string[] images { get; set; }
+    public bool isVerify { get; set; } = false;
+}
+
 public partial class ImageGenerationService : BackgroundService
 {
-
     [GeneratedRegex("[^a-zA-Z]")]
     private static partial Regex NonAlphabeticCharactersRegex();
     
@@ -59,7 +64,11 @@ public partial class ImageGenerationService : BackgroundService
                 Log.Information("Add {Phrase} to pending verify", phrase);
             }
 
-            var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(base64Images))); 
+            var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
+            {
+                images = base64Images.ToArray(),
+                isVerify = true
+            }))); 
             _firebaseService.UploadObject(filePath, stream);
             Log.Information("Complete process [{Phrase}]", phrase);
         }

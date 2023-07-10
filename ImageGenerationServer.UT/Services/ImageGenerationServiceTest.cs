@@ -1,10 +1,8 @@
+using System.Text.Json;
 using System.Threading.Channels;
 using ImageGenerationServer.DB;
-using ImageGenerationServer.DTO;
 using ImageGenerationServer.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
 using static ImageGenerationServer.Services.ImageGenerationService;
 using static Moq.It;
@@ -39,6 +37,10 @@ public class ImageGenerationServiceTest : TestBase
     {
         _replicateAiServiceMock.Setup(m => m.GenerateImage(IsAny<string>()))
             .Returns(Task.FromResult(new List<string> { "base 64 image"}));
+        Stream uploadedStream = null;
+        _firebaseServiceMock.Setup(x => x.UploadObject(IsAny<string>(), IsAny<Stream>()))
+            .Callback((string parameter, Stream stream) => uploadedStream = stream);
+        
         await _service.StartAsync(CancellationToken.None);
         _channel.Writer.TryWrite("test");
         await Task.Delay(100);
@@ -46,6 +48,11 @@ public class ImageGenerationServiceTest : TestBase
         
         _firebaseServiceMock.Verify(m => m.IsExists(IsAny<string>()), Times.Once);
         _firebaseServiceMock.Verify(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()), Times.Once);
+
+        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
+        Assert.AreEqual(1, imagesObject.images.Length);
+        Assert.AreEqual(true, imagesObject.isVerify);
+        await uploadedStream.DisposeAsync();
     }
     
     [TestMethod]
