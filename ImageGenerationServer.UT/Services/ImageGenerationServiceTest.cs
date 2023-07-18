@@ -51,7 +51,7 @@ public class ImageGenerationServiceTest : TestBase
 
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
         Assert.AreEqual(1, imagesObject.images.Length);
-        Assert.AreEqual(true, imagesObject.isVerify);
+        Assert.AreEqual(false, imagesObject.isVerify);
         await uploadedStream.DisposeAsync();
     }
     

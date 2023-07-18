@@ -67,7 +67,7 @@ public partial class ImageGenerationService : BackgroundService
             var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
             {
                 images = base64Images.ToArray(),
-                isVerify = true
+                isVerify = false
             }))); 
             _firebaseService.UploadObject(filePath, stream);
             Log.Information("Complete process [{Phrase}]", phrase);
