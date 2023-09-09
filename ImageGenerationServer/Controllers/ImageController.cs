@@ -1,4 +1,6 @@
 using System.Threading.Channels;
+using ImageGenerationServer.DB;
+using ImageGenerationServer.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
@@ -8,9 +10,12 @@ namespace ImageGenerationServer.Controllers;
 [Route("image")]
 public class ImageController : ControllerBase
 {
+    private readonly DataContext _context;
     private readonly ChannelWriter<string> _channelWriter;
-    public ImageController(Channel<string> channel)
+    
+    public ImageController(Channel<string> channel, DataContext context)
     {
+        _context = context;
         _channelWriter = channel.Writer;
     }
 

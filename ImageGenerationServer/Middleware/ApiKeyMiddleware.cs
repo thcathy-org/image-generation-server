@@ -26,7 +26,9 @@ public class ApiKeyMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Path.StartsWithSegments("/image"))
+        var path = context.Request.Path;
+        if (!path.StartsWithSegments("/image") 
+            && !path.StartsWithSegments("/verify"))
         {
             await _next(context);
             return;

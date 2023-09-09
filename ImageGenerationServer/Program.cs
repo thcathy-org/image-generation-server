@@ -17,7 +17,9 @@ builder.Services.Configure<FirebaseServiceOptions>(builder.Configuration.GetSect
 builder.Services.AddSingleton(Channel.CreateUnbounded<string>());
 builder.Services.AddSingleton<IFirebaseService, FirebaseService>();
 builder.Services.AddSingleton<IReplicateAiService, ReplicateAiService>();
+builder.Services.AddSingleton<IVerifyService, VerifyService>();
 builder.Services.AddHostedService<ImageGenerationService>();
+builder.Services.AddScoped<IDataRepository, DataRepository>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<DataContext>(options =>
@@ -45,6 +47,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+app.UseRouting();
 
 app.UseAuthorization();
 

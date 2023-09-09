@@ -11,14 +11,11 @@ namespace ImageGenerationServer.Services;
 public class ImagesObject
 {
     public string[] images { get; set; }
-    public bool isVerify { get; set; } = false;
+    public bool isVerify { get; set; }
 }
 
 public partial class ImageGenerationService : BackgroundService
 {
-    [GeneratedRegex("[^a-zA-Z]")]
-    private static partial Regex NonAlphabeticCharactersRegex();
-    
     private readonly ChannelReader<string> _channelReader;
     private readonly IServiceProvider _serviceProvider;
     private readonly IFirebaseService _firebaseService;
@@ -41,10 +38,18 @@ public partial class ImageGenerationService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             var phrase = await _channelReader.ReadAsync(stoppingToken);
-            var filePath = GetImageFilePath(phrase);
+            var filePath = phrase.GetImageFilePath();
             Log.Information("process [{Phrase}], filePath={FilePath}", phrase, filePath);
             
-            if (await _firebaseService.IsExists(filePath))
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetService<IDataRepository>();
+                await repo.AddOrUpdate(new PendingVerifyPhrase(phrase));
+                Log.Information("Add {Phrase} to pending verify", phrase);
+            }
+
+            var obj = await _firebaseService.GetObject(filePath);
+            if (obj != null)
             {
                 Log.Information("[{Phrase}] already generated. skipping", phrase);
                 continue;
@@ -55,13 +60,6 @@ public partial class ImageGenerationService : BackgroundService
             {
                 Log.Information("No images generated for [{Phrase}]", phrase);
                 continue;
-            }
-            
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetService<DataContext>();
-                context!.PendingVerifyPhrases.Add(new PendingVerifyPhrase(phrase));
-                Log.Information("Add {Phrase} to pending verify", phrase);
             }
 
             var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
@@ -76,12 +74,18 @@ public partial class ImageGenerationService : BackgroundService
         Log.Information("ImageGenerationService background task is stopping");
     }
     
-    public static string GetImageFilePath(string phrase)
+}
+
+public static partial class StringExtension
+{
+    [GeneratedRegex("[^a-zA-Z]")]
+    private static partial Regex NonAlphabeticCharactersRegex();
+
+    public static string GetImageFilePath(this string phrase)
     {
         string filename = phrase.ToLower();
         filename = $"{NonAlphabeticCharactersRegex().Replace(filename, "-")}.json";
         var folder = filename.Length < 2 ? filename : filename[..2];
         return $"{folder}/{filename}";
     }
-
 }

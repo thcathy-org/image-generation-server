@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Options;
 using Serilog;
+using Object = Google.Apis.Storage.v1.Data.Object;
 
 namespace ImageGenerationServer.Services;
 
@@ -13,8 +14,9 @@ public class FirebaseServiceOptions
 
 public interface IFirebaseService
 {
-    ValueTask<bool> IsExists(string filename);
+    ValueTask<Object?> GetObject(string filename);
     void UploadObject(string filename, Stream source);
+    ValueTask<Stream> DownloadObjectAsync(Object obj);
 }
 
 public class FirebaseService : IFirebaseService
@@ -27,19 +29,27 @@ public class FirebaseService : IFirebaseService
         _options = config.Value;
     }
 
-    public async ValueTask<bool> IsExists(string filename)
+    public async ValueTask<Object?> GetObject(string filename)
     {
         var storage = StorageClientBuilder.Invoke();
         var objectName = GetObjectName(filename);
         try
         {
-            var obj = await storage.GetObjectAsync(_options.BucketName, objectName);
-            return obj != null;
+            return await storage.GetObjectAsync(_options.BucketName, objectName);
         }
         catch (Exception)
         {
-            return false;
+            return null;
         }
+    }
+
+    public async ValueTask<Stream> DownloadObjectAsync(Object obj)
+    {
+        var storage = StorageClientBuilder.Invoke();
+        var stream = new MemoryStream();
+        await storage.DownloadObjectAsync(obj, stream);
+        stream.Position = 0;
+        return stream;
     }
 
     public void UploadObject(string filename, Stream source)

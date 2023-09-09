@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Google.Cloud.Storage.V1;
 using ImageGenerationServer.Services;
 using Microsoft.Extensions.Options;
@@ -24,23 +25,22 @@ public class FirebaseServiceTest : TestBase
         _storageClientMock = new Mock<StorageClient>();
         _firebaseService.StorageClientBuilder = () => _storageClientMock.Object;
     }
-    
+
     [TestMethod]
-    public async Task CheckFile_CanGetFromFirebase_ReturnTrue()
+    public async Task GetObject_CanGetFromFirebase()
     {
         _storageClientMock.Setup(m => m.GetObjectAsync(IsAny<string>(), IsAny<string>(), null, default))
             .ReturnsAsync(new Object());
-        bool result = await _firebaseService.IsExists("apple");
-        Assert.IsTrue(result);
+        var result = await _firebaseService.GetObject("apple");
+        Assert.IsNotNull(result);
     }
     
     [TestMethod]
-    public async Task CheckFile_CannotGetFromFirebase_ReturnFalse()
+    public async Task GetObject_CannotGetFromFirebase_ReturnNull()
     {
         _storageClientMock.Setup(m => m.GetObjectAsync(IsAny<string>(), IsAny<string>(), null, default))
             .Throws<Exception>();
-        bool result = await _firebaseService.IsExists("apple");
-        Assert.IsFalse(result);
+        Assert.IsNull(await _firebaseService.GetObject("apple"));
     }
 
 }

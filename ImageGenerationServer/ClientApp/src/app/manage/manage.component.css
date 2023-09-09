@@ -1,0 +1,10 @@
+img {
+  padding:3px; margin:5px;
+}
+.image-selected {
+  border:5px solid #ff0000; margin:0;
+}
+
+button {
+  padding: 5px;
+}

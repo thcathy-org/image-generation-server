@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Threading.Channels;
 using ImageGenerationServer.DB;
 using ImageGenerationServer.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using static ImageGenerationServer.Services.ImageGenerationService;
@@ -16,8 +17,10 @@ public class ImageGenerationServiceTest : TestBase
     private Channel<string> _channel = Channel.CreateUnbounded<string>();
 
     private Mock<IFirebaseService> _firebaseServiceMock = new();
-    private Mock<IReplicateAiService> _replicateAiServiceMock = new(); 
+    private Mock<IReplicateAiService> _replicateAiServiceMock = new();
+    private Mock<IDataRepository> _repoMock = new();
     
+
     [TestInitialize]
     public void init()
     {
@@ -26,8 +29,8 @@ public class ImageGenerationServiceTest : TestBase
         services.AddSingleton(_replicateAiServiceMock.Object);
         services.AddSingleton(_channel);
         services.AddSingleton<ImageGenerationService>();
-        services.AddDbContext<DataContext>();
-
+        services.AddScoped<IDataRepository>(r => _repoMock.Object);
+        
         var provider = services.BuildServiceProvider();
         _service = provider.GetRequiredService<ImageGenerationService>();
     }
@@ -46,7 +49,7 @@ public class ImageGenerationServiceTest : TestBase
         await Task.Delay(100);
         await _service.StopAsync(CancellationToken.None);
         
-        _firebaseServiceMock.Verify(m => m.IsExists(IsAny<string>()), Times.Once);
+        _firebaseServiceMock.Verify(m => m.GetObject(IsAny<string>()), Times.Once);
         _firebaseServiceMock.Verify(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()), Times.Once);
 
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
@@ -58,8 +61,8 @@ public class ImageGenerationServiceTest : TestBase
     [TestMethod]
     public void ToLowerCaseAndReplaceNonAlphabeticCharacters_CanReplace()
     {
-        Assert.AreEqual("ap/apple.json", GetImageFilePath("Apple"));
-        Assert.AreEqual("th/the-is-not-a-----correct-phrase.json", GetImageFilePath("The is not a !@# correct phrase"));
-        Assert.AreEqual("do/download-an-image.json", GetImageFilePath("download-an-image"));
+        Assert.AreEqual("ap/apple.json", "Apple".GetImageFilePath());
+        Assert.AreEqual("th/the-is-not-a-----correct-phrase.json", "The is not a !@# correct phrase".GetImageFilePath());
+        Assert.AreEqual("do/download-an-image.json", "download-an-image".GetImageFilePath());
     }
 }

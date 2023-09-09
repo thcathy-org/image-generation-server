@@ -6,12 +6,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>fb7adab7-1307-4734-bd2c-46b232257d3d</UserSecretsId>
+    <RootNamespace>ImageGenerationServer</RootNamespace>
+    
+    <SpaRoot>ClientApp\</SpaRoot>
+    <SpaProxyServerUrl>http://localhost:44447</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Google.Apis.Firebasestorage.v1beta" Version="1.60.0.3056" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="7.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -30,5 +36,5 @@
   <ItemGroup>
     <None Remove="Properties\launchSettings.secret.json" />
   </ItemGroup>
-
+  
 </Project>
