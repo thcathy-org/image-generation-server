@@ -8,7 +8,7 @@ import {environment} from "../../environments/environment";
   styleUrls: ['./manage.component.css']
 })
 export class ManageComponent {
-  private imageBaseUrl = environment.imagesHost;
+  public imageBaseUrl = environment.imagesHost;
 
   public phrases: PendingVerifyPhrase[] = [];
   public totalPending = 0;
