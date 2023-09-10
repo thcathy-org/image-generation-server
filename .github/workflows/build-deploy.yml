@@ -48,6 +48,13 @@ jobs:
         file: ImageGenerationServer/Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
         platforms: linux/arm64,linux/amd64
+    - uses: docker/build-push-action@v3
+      with:
+        push: true
+        context: ./angular-admin
+        file: angular-admin/Dockerfile
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:${{ env.DOCKER_IMAGE_TAG }}
+        platforms: linux/arm64,linux/amd64
     outputs:
       docker_image_tag: ${{ env.DOCKER_IMAGE_TAG }}
   deploy-k8s-uat:
