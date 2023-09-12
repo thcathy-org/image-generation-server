@@ -57,7 +57,7 @@ jobs:
         push: true
         context: ./ImageGenerationServer
         file: ImageGenerationServer/Dockerfile
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ env.DOCKER_IMAGE_TAG }}
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ needs.get-version.outputs.docker_image_tag }}
         platforms: linux/arm64,linux/amd64
   docker-build-admin:
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
           file: angular-admin/Dockerfile
           build-args:
             BASE_HREF=${{ env.ADMIN_PATH_UAT }}
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest-uat,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin-uat:${{ env.DOCKER_IMAGE_TAG }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest-uat,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin-uat:${{ needs.get-version.outputs.docker_image_tag }}
           platforms: linux/arm64,linux/amd64
       - uses: docker/build-push-action@v3
         with:
@@ -87,7 +87,7 @@ jobs:
           file: angular-admin/Dockerfile
           build-args:
             BASE_HREF=${{ env.ADMIN_PATH_PROD }}
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest-prod,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin-prod:${{ env.DOCKER_IMAGE_TAG }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest-prod,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin-prod:${{ needs.get-version.outputs.docker_image_tag }}
           platforms: linux/arm64,linux/amd64
   deploy-k8s-uat:
     runs-on: ubuntu-latest
@@ -103,7 +103,7 @@ jobs:
           options: |
             --inventory ansible/inventory_uat
             --limit uat
-            -e docker_image_tag=${{ needs.docker-build.outputs.docker_image_tag }}
+            -e docker_image_tag=${{ needs.get-version.outputs.docker_image_tag }}
             -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
             -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
             -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
@@ -122,7 +122,7 @@ jobs:
             --inventory ansible/inventory_prod
             --limit prod
             --skip-tags verify-uat
-            -e docker_image_tag=${{ needs.docker-build.outputs.docker_image_tag }}
+            -e docker_image_tag=${{ needs.get-version.outputs.docker_image_tag }}
             -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
             -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
             -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
