@@ -134,7 +134,7 @@ spec:
     spec:
       containers:
       - name: angular-admin
-        image: thcathy/{{ app_name }}-admin:{{ docker_image_tag }}
+        image: thcathy/{{ app_name }}-admin-{{ ansible_limit }}:{{ docker_image_tag }}
         ports:
         - containerPort: 80
         readinessProbe:
