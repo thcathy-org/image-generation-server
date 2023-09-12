@@ -75,7 +75,7 @@ jobs:
           context: ./angular-admin
           file: angular-admin/Dockerfile
           build-args:
-            BASE_HREF=${{ ADMIN_PATH_UAT }}
+            BASE_HREF=${{ env.ADMIN_PATH_UAT }}
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest-uat,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin-uat:${{ env.DOCKER_IMAGE_TAG }}
           platforms: linux/arm64,linux/amd64
       - uses: docker/build-push-action@v3
@@ -84,7 +84,7 @@ jobs:
           context: ./angular-admin
           file: angular-admin/Dockerfile
           build-args:
-            BASE_HREF=${{ ADMIN_PATH_PROD }}
+            BASE_HREF=${{ env.ADMIN_PATH_PROD }}
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin:latest-prod,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server-admin-prod:${{ env.DOCKER_IMAGE_TAG }}
           platforms: linux/arm64,linux/amd64
   deploy-k8s-uat:
