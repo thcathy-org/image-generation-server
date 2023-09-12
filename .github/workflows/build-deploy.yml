@@ -103,7 +103,7 @@ jobs:
           platforms: linux/arm64,linux/amd64
   deploy-k8s-uat:
     runs-on: ubuntu-latest
-    needs: [docker-build-server, docker-build-admin-uat, docker-build-admin-prod]
+    needs: [get-version, docker-build-server, docker-build-admin-uat, docker-build-admin-prod]
     steps:
       - uses: actions/checkout@v3
       - name: Run ansible playbook to deploy and verify k8s UAT
@@ -121,7 +121,7 @@ jobs:
             -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
   deploy-k8s-prod:
     runs-on: ubuntu-latest
-    needs: [deploy-k8s-uat] 
+    needs: [get-version, deploy-k8s-uat] 
     steps:
       - uses: actions/checkout@v3
       - name: Run ansible playbook to deploy and verify k8s PROD
