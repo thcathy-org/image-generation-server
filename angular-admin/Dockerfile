@@ -10,8 +10,7 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 COPY . .
-RUN npm install -g @angular/cli
-RUN ng build --configuration production --base-href $base_href
+RUN npm run build --production -- --base-href=$base_href
 
 # deploy
 FROM nginx:1.23.3-alpine
