@@ -21,7 +21,7 @@ export class ManageComponent {
 
   constructor(public http: HttpClient) {
     if (environment.production) {
-      this.serverHost = window.location.protocol + '://' + window.location.host + '/' + window.location.pathname.replace('-admin', ''); 
+      this.serverHost = window.location.protocol + '//' + window.location.host + window.location.pathname.replace('-admin', '') + '/';
     } else {
       this.serverHost = environment.serverBasePath;
     }
