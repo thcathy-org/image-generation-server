@@ -1,11 +1,7 @@
 ---
-- name: Generate a random string with all lower case characters
-  set_fact:
-    random_string: "{{ lookup('community.general.random_string', upper=false, numbers=false, special=false) }}"
-  tags: verify-uat
 - name: submit image generation request
   uri:
-    url: "https://{{ inventory_hostname }}/{{ namespace }}/image/generate/test-{{random_string}}"
+    url: "https://{{ inventory_hostname }}/{{ namespace }}/image/generate/test-phrase"
     method: POST
     headers:
       X-API-KEY: "{{APIKEYMIDDLEWAREOPTIONS__APIKEYS}}"
