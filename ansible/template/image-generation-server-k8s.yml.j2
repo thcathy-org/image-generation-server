@@ -18,6 +18,7 @@ spec:
       containers:
       - name: {{ app_name }}
         image: thcathy/{{ app_name }}:{{ docker_image_tag }}
+        imagePullPolicy: Always
         env:
         - name: ApiKeyMiddlewareOptions__ApiKeys
           valueFrom:
@@ -135,6 +136,7 @@ spec:
       containers:
       - name: angular-admin
         image: thcathy/{{ url_base_path }}-admin:{{ docker_image_tag }}
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         readinessProbe:
