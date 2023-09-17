@@ -25,10 +25,10 @@ public class VerifyController : ControllerBase
     public int GetTotalPendingVerify() => _context.PendingVerifyPhrases.Count();
 
     [HttpGet("pending")]
-    public List<PendingVerifyPhrase> GetPendingVerifyPhrases()
+    public List<PendingVerifyPhrase> GetPendingVerifyPhrases([FromQuery(Name = "max")] int max = 20)
     {
-        Log.Information("get pending verify phrases");
-        return _context.PendingVerifyPhrases.ToList();
+        Log.Information($"get pending verify phrases, max={max}");
+        return _context.PendingVerifyPhrases.Take(max).ToList();
     }
     
     // for testing only

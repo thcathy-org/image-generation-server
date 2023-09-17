@@ -1,13 +1,13 @@
 <div>
     imageBaseUrl: <input type="text" style="width: 90%;" [(ngModel)]="imageBaseUrl" /><br />
     serverHost: <input type="text" style="width: 90%;" [(ngModel)]="serverHost" /><br />
-    Access key: <input type="text" [(ngModel)]="accessKey" />
+    Access key: <input type="text" [(ngModel)]="accessKey" /> Max pending: <input type="text" [(ngModel)]="maxPending" />
     <button (click)="load()">Load</button>
     <button (click)="verified()">Verified</button>
   </div>
-  
+
   <p>Total pending: {{totalPending}}</p>
-  
+
   <div *ngFor="let phrase of phrases">
     <p>{{ phrase.phrase }}</p>
     <img *ngFor="let image of phrase.base64Images; let i = index" [src]="image | safeHtml" alt="{{phrase.phrase}}"
@@ -15,4 +15,3 @@
          [class.image-selected]="selectedImage.has(phrase.phrase + imageKeySeparator + i)"
     />
   </div>
-  

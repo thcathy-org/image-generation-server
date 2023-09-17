@@ -16,6 +16,7 @@ export class ManageComponent {
   public accessKey = "";
   public imageKeySeparator = ':';
   public serverHost: string;
+  public maxPending: number = 20;
 
   httpErrorHandler = (error: any) => window.alert(JSON.stringify(error));
 
@@ -36,7 +37,7 @@ export class ManageComponent {
       error: this.httpErrorHandler
     })
 
-    this.http.get<PendingVerifyPhrase[]>(this.serverHost + 'verify/pending', {
+    this.http.get<PendingVerifyPhrase[]>(this.serverHost + `verify/pending?max=${this.maxPending}`, {
       headers: {'X-API-KEY':this.accessKey}
     })
       .subscribe({

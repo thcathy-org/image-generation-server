@@ -20,6 +20,17 @@ builder.Services.AddSingleton<IReplicateAiService, ReplicateAiService>();
 builder.Services.AddSingleton<IVerifyService, VerifyService>();
 builder.Services.AddHostedService<ImageGenerationService>();
 builder.Services.AddScoped<IDataRepository, DataRepository>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.WithOrigins("https://localhost:44351", "http://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddDbContext<DataContext>(options =>
@@ -47,6 +58,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 // app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthorization();
 
