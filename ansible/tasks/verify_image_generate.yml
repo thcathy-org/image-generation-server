@@ -14,7 +14,7 @@
   tags: verify-uat
 - name: check image is generated
   uri:
-    url: "https://firebasestorage.googleapis.com/v0/b/{{firebase_bucket}}/o/{{firebase_folder}}%2Fte%2Ftest-{{random_string}}.json?alt=media"
+    url: "https://firebasestorage.googleapis.com/v0/b/{{firebase_bucket}}/o/{{firebase_folder}}%2Fte%2Ftest-phrase.json?alt=media"
     return_content: yes
     status_code: 200
   register: result
