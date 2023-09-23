@@ -1,12 +1,14 @@
+using System.Linq.Expressions;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using ImageGenerationServer.DB;
+using ImageGenerationServer.DTO;
 using ImageGenerationServer.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using static ImageGenerationServer.Services.ImageGenerationService;
 using static Moq.It;
+using Object = Google.Apis.Storage.v1.Data.Object;
 
 namespace ImageGenerationServer.UT.Services;
 
@@ -41,16 +43,15 @@ public class ImageGenerationServiceTest : TestBase
         _replicateAiServiceMock.Setup(m => m.GenerateImage(IsAny<string>()))
             .Returns(Task.FromResult(new List<string> { "base 64 image"}));
         Stream uploadedStream = null;
-        _firebaseServiceMock.Setup(x => x.UploadObject(IsAny<string>(), IsAny<Stream>()))
-            .Callback((string parameter, Stream stream) => uploadedStream = stream);
+        _firebaseServiceMock.Setup(UploadObjectExpression).Callback((string parameter, Stream stream) => uploadedStream = stream);
         
         await _service.StartAsync(CancellationToken.None);
         _channel.Writer.TryWrite("test");
         await Task.Delay(100);
         await _service.StopAsync(CancellationToken.None);
         
-        _firebaseServiceMock.Verify(m => m.GetObject(IsAny<string>()), Times.Once);
-        _firebaseServiceMock.Verify(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()), Times.Once);
+        _firebaseServiceMock.Verify(DownloadObjectAsyncExpression, Times.Once);
+        _repoMock.Verify(AddOrUpdateExpression, Times.Once);
 
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
         Assert.AreEqual(1, imagesObject.images.Length);
@@ -65,4 +66,27 @@ public class ImageGenerationServiceTest : TestBase
         Assert.AreEqual("th/the-is-not-a-----correct-phrase.json", "The is not a !@# correct phrase".GetImageFilePath());
         Assert.AreEqual("do/download-an-image.json", "download-an-image".GetImageFilePath());
     }
+    
+    [DataTestMethod]
+    [DataRow(false, true)]
+    public async Task ExecuteAsync_IsPhraseVerify_AddToPending(bool isPhraseVerify, bool isAddToPending)
+    {
+        var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
+        {
+            isVerify = isPhraseVerify
+        })));
+        _firebaseServiceMock.Setup(DownloadObjectAsyncExpression).ReturnsAsync(stream);
+        
+        await _service.StartAsync(CancellationToken.None);
+        _channel.Writer.TryWrite("test");
+        await Task.Delay(100);
+        await _service.StopAsync(CancellationToken.None);
+        
+        _repoMock.Verify(AddOrUpdateExpression, isAddToPending ? Times.Once : Times.Never);
+    }
+
+    static readonly Expression<Action<IDataRepository>> AddOrUpdateExpression = m => m.AddOrUpdate(IsAny<PendingVerifyPhrase>());
+    static readonly Expression<Func<IFirebaseService, ValueTask<Object?>>> GetObjectAsyncExpression = m => m.GetObject(IsAny<string>());
+    static readonly Expression<Action<IFirebaseService>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
+    static readonly Expression<Func<IFirebaseService, ValueTask<Stream?>>> DownloadObjectAsyncExpression = m => m.DownloadObjectAsync(IsAny<string>());
 }
