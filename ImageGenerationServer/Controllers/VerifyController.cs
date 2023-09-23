@@ -1,4 +1,3 @@
-using System.Threading.Channels;
 using ImageGenerationServer.DB;
 using ImageGenerationServer.DTO;
 using ImageGenerationServer.Services;
@@ -14,11 +13,13 @@ public class VerifyController : ControllerBase
 {
     private readonly DataContext _context;
     private readonly IVerifyService _verifyService;
+    private readonly IFirebaseService _firebaseService;
 
-    public VerifyController(DataContext context, IVerifyService verifyService)
+    public VerifyController(DataContext context, IVerifyService verifyService, IFirebaseService firebaseService)
     {
         _context = context;
         _verifyService = verifyService;
+        _firebaseService = firebaseService;
     }
 
     [HttpGet("total")]
@@ -38,6 +39,16 @@ public class VerifyController : ControllerBase
         Log.Information($"add phrase={phrase} into db");
         _context.Add(new PendingVerifyPhrase(phrase));
         _context.SaveChanges();
+    }
+
+    [HttpPost("remove")]
+    public void Remove(PendingVerifyPhrase phrase)
+    {
+        Log.Information($"remove phrase={phrase.Phrase}");
+        _firebaseService.DeleteObject(phrase.Phrase.GetImageFilePath());
+        _context.PendingVerifyPhrases
+            .Where(p => p.Phrase.Equals(phrase.Phrase))
+            .ExecuteDelete();
     }
 
     [HttpPost("verified")]

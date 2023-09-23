@@ -20,8 +20,7 @@ public class VerifyService : IVerifyService
     public async Task Verify(VerifiedPhrase phrase)
     {
         var imageFilePath = phrase.Phrase.GetImageFilePath();
-        var obj = await _firebaseService.GetObject(imageFilePath);
-        var stream = await _firebaseService.DownloadObjectAsync(obj);
+        var stream = await _firebaseService.DownloadObjectAsync(imageFilePath.GetImageFilePath());
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(stream);
         
         imagesObject.images = imagesObject.images.Where((_, index) => !phrase.RemoveImageIndex.Contains(index)).ToArray();

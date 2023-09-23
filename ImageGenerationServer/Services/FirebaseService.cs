@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -16,7 +15,9 @@ public interface IFirebaseService
 {
     ValueTask<Object?> GetObject(string filename);
     void UploadObject(string filename, Stream source);
-    ValueTask<Stream> DownloadObjectAsync(Object obj);
+    // ValueTask<Stream> DownloadObjectAsync(Object obj);
+    ValueTask<Stream?> DownloadObjectAsync(string filename);
+    Task DeleteObject(string filename);
 }
 
 public class FirebaseService : IFirebaseService
@@ -33,17 +34,40 @@ public class FirebaseService : IFirebaseService
     {
         var storage = StorageClientBuilder.Invoke();
         var objectName = GetObjectName(filename);
+        
         try
         {
             return await storage.GetObjectAsync(_options.BucketName, objectName);
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            Log.Warning($"Exception when get object: {filename}", e);
             return null;
         }
     }
 
-    public async ValueTask<Stream> DownloadObjectAsync(Object obj)
+    public async ValueTask<Stream?> DownloadObjectAsync(string filename)
+    {
+        var obj = await GetObject(filename);
+        if (obj == null) return null;
+        return await DownloadObjectAsync(obj);
+    }
+
+    public async Task DeleteObject(string filename)
+    {
+        var storage = StorageClientBuilder.Invoke();
+        var objectName = GetObjectName(filename);
+        try
+        { 
+            await storage.DeleteObjectAsync(_options.BucketName, objectName);
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"Exception when delete object: {filename}", e);
+        }
+    }
+
+    private async ValueTask<Stream> DownloadObjectAsync(Object obj)
     {
         var storage = StorageClientBuilder.Invoke();
         var stream = new MemoryStream();

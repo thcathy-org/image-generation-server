@@ -92,6 +92,15 @@ export class ManageComponent {
     else
       this.selectedImage.add(key);
   }
+
+  remove(phraseToRemove: PendingVerifyPhrase) {
+    this.http.post<any>(this.serverHost + 'verify/remove',  phraseToRemove, {
+      headers: {'X-API-KEY':this.accessKey}
+    }).subscribe({
+      next: _ => this.phrases = this.phrases.filter(p => p.phrase !== phraseToRemove.phrase),
+      error: this.httpErrorHandler
+    });
+  }
 }
 
 interface PendingVerifyPhrase {

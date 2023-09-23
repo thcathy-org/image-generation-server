@@ -41,14 +41,9 @@ public partial class ImageGenerationService : BackgroundService
             var filePath = phrase.GetImageFilePath();
             Log.Information("process [{Phrase}], filePath={FilePath}", phrase, filePath);
             
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var repo = scope.ServiceProvider.GetService<IDataRepository>();
-                await repo.AddOrUpdate(new PendingVerifyPhrase(phrase));
-                Log.Information("Add {Phrase} to pending verify", phrase);
-            }
-
-            var obj = await _firebaseService.GetObject(filePath);
+            var obj = await _firebaseService.DownloadObjectAsync(filePath);
+            await AddToPendingIfNeeded(obj, phrase);
+            
             if (obj != null)
             {
                 Log.Information("[{Phrase}] already generated. skipping", phrase);
@@ -73,7 +68,18 @@ public partial class ImageGenerationService : BackgroundService
 
         Log.Information("ImageGenerationService background task is stopping");
     }
-    
+
+    private async Task AddToPendingIfNeeded(Stream? stream, string phrase)
+    {
+        var imagesObject = stream == null ? null : JsonSerializer.Deserialize<ImagesObject>(stream);
+        if (imagesObject == null || !imagesObject.isVerify)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repo = scope.ServiceProvider.GetService<IDataRepository>()!;
+            await repo.AddOrUpdate(new PendingVerifyPhrase(phrase));
+            Log.Information("Add {Phrase} to pending verify", phrase);
+        }
+    }
 }
 
 public static partial class StringExtension
