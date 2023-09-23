@@ -47,6 +47,9 @@ public class FirebaseServiceTest : TestBase
     [TestMethod]
     public async Task DownloadObjectAsync_WillGetObjectAndDownload()
     {
+        _storageClientMock.Setup(GetObjectAsyncExpression)
+            .ReturnsAsync(new Object());
+        
         var result = await _firebaseService.DownloadObjectAsync("apple");
         Assert.IsNotNull(result);
         _storageClientMock.Verify(GetObjectAsyncExpression, Times.Once);
