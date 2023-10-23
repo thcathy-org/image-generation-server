@@ -68,8 +68,9 @@ public class ImageGenerationServiceTest : TestBase
     }
     
     [DataTestMethod]
-    [DataRow(false, true)]
-    public async Task ExecuteAsync_IsPhraseVerify_AddToPending(bool isPhraseVerify, bool isAddToPending)
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ExecuteAsync_IsPhraseVerify_DoNotAddToPending(bool isPhraseVerify)
     {
         var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
         {
@@ -82,7 +83,7 @@ public class ImageGenerationServiceTest : TestBase
         await Task.Delay(100);
         await _service.StopAsync(CancellationToken.None);
         
-        _repoMock.Verify(AddOrUpdateExpression, isAddToPending ? Times.Once : Times.Never);
+        _repoMock.Verify(AddOrUpdateExpression, isPhraseVerify ? Times.Never : Times.Once);
     }
 
     static readonly Expression<Action<IDataRepository>> AddOrUpdateExpression = m => m.AddOrUpdate(IsAny<PendingVerifyPhrase>());
