@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -18,11 +17,29 @@ public interface IReplicateAiService
     Task<List<string>> GenerateImage(string keyword);
 }
 
+public enum Model
+{
+    STABLE_DIFFUSION, STABLE_DIFFUSION_XL
+}
+
+public static class ModelExtension
+{
+    public static string Version(this Model model)
+    {
+        return model switch
+        {
+            Model.STABLE_DIFFUSION => "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
+            Model.STABLE_DIFFUSION_XL => "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+            _ => throw new ArgumentOutOfRangeException(nameof(model), model, null)
+        };
+    }
+}
+
 public class ReplicateAiService : IReplicateAiService
 {
-    private const string BasePrompt = "clip art";
-    private const string BaseNegativePrompt = "english characters, alphabet, realistic";
-    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(1);
+    private const string BasePrompt = "a cartoon style of what written inside \"\"\". \n\n\"\"\"{keyword}\"\"\"";
+    private const string BaseNegativePrompt = "English characters, English alphabet, text, letters, words";
+    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
 
     private readonly ReplicateAiServiceOptions _options;
     private readonly HttpClient _httpClient;
@@ -54,20 +71,22 @@ public class ReplicateAiService : IReplicateAiService
         request.Headers.Add("Authorization", $"Token {_options.Token}");
         var payload = JsonConvert.SerializeObject(new
         {
-            version = "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
+            version = Model.STABLE_DIFFUSION_XL.Version(),
             input = new
             {
-                prompt = $"{keyword}, {BasePrompt}",
-                image_dimensions = "512x512",
+                prompt = BasePrompt.Replace("{keyword}", keyword),
+                // image_dimensions = "512x512",    // for SD
+                height = 512,     // for SDXL
+                width = 512,      // for SDXL
                 negative_prompt = BaseNegativePrompt,
-                num_outputs = 4
+                num_outputs = 4,
             }
         });
         request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
         var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync();
         Log.Information("response: {Message}", json);
+        response.EnsureSuccessStatusCode();
         return JObject.Parse(json).Value<string>("id")!;
     }
 
@@ -89,7 +108,7 @@ public class ReplicateAiService : IReplicateAiService
         var startTime = DateTime.Now;
         while (DateTime.Now - startTime < Timeout)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/{id}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.BaseUrl}/{id}");
             request.Headers.Add("Authorization", $"Token {_options.Token}");
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -102,7 +121,7 @@ public class ReplicateAiService : IReplicateAiService
                 Log.Information("Complete generate images for '{value}'", jsonObject.Value<JObject>("input")!.Value<string>("prompt"));
                 return jsonObject.Value<JArray>("output")!.ToObject<List<string>>()!;
             }
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Thread.Sleep(TimeSpan.FromSeconds(3));
         }
         throw new TimeoutException("Timeout when generating images");
     }

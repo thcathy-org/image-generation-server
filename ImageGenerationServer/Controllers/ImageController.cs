@@ -1,6 +1,5 @@
 using System.Threading.Channels;
 using ImageGenerationServer.DB;
-using ImageGenerationServer.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
