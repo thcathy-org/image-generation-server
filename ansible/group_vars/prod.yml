@@ -1,4 +1,5 @@
 ---
+kubeconfig: "/home/ubuntu/.kube/config"
 deploy_folder: ~/k3s
 namespace: image-generation-server
 url_base_path: image-generation-server
