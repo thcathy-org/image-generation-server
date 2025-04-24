@@ -1,6 +1,6 @@
 ---
 app_name: image-generation-server
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-kubeconfig: /home/ubuntu/.kube/config
+kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
 firebase_bucket: friendlyeats-7fa2f.appspot.com
 firebase_folder: test-images

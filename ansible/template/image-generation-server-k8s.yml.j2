@@ -82,11 +82,11 @@ kind: Ingress
 metadata:
   name: {{ app_name }}-ingress
   annotations:
-    kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: {{ namespace }}-{{ app_name }}-prefix-remover@kubernetescrd
 spec:
+  ingressClassName: traefik
   tls:
   - secretName: {{ app_name }}-tls
     hosts:
@@ -172,11 +172,11 @@ kind: Ingress
 metadata:
   name: angular-admin-ingress
   annotations:
-    kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: {{ namespace }}-angular-admin-prefix-remover@kubernetescrd
 spec:
+  ingressClassName: traefik
   tls:
   - secretName: angular-admin-tls
     hosts:
