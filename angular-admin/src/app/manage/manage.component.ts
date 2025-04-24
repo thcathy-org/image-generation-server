@@ -1,6 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Component } from '@angular/core';
 import { environment } from '../../environments/environment';
+import {firstValueFrom} from "rxjs";
 
 
 @Component({
@@ -17,6 +18,7 @@ export class ManageComponent {
   public imageKeySeparator = ':';
   public serverHost: string;
   public maxPending: number = 20;
+  public removingCount: number = 0;
 
   httpErrorHandler = (error: any) => window.alert(JSON.stringify(error));
 
@@ -98,6 +100,27 @@ export class ManageComponent {
       headers: {'X-API-KEY':this.accessKey}
     }).subscribe({
       next: _ => this.phrases = this.phrases.filter(p => p.phrase !== phraseToRemove.phrase),
+      error: this.httpErrorHandler
+    });
+  }
+
+  async removeAll(phrases: PendingVerifyPhrase[]) {
+    this.removingCount = phrases.length;
+    for (const phrase of phrases) {
+      try {
+        await firstValueFrom(this.http.post<any>(this.serverHost + 'verify/remove', phrase, {
+          headers: {'X-API-KEY': this.accessKey}
+        }));
+        this.removingCount--;
+      } catch (error) {
+        this.httpErrorHandler(error);
+      }
+    }
+    this.phrases = [];
+    this.http.get<number>(this.serverHost + 'verify/total', {
+      headers: {'X-API-KEY':this.accessKey}
+    }).subscribe({
+      next: value => this.totalPending = value,
       error: this.httpErrorHandler
     });
   }
