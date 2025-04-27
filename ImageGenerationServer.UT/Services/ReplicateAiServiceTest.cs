@@ -40,7 +40,7 @@ public class ReplicateAiServiceTest : TestBase
             "id": "testId",
             "status": "succeeded",
             "input":{"image_dimensions":"512x512","negative_prompt":"english characters, alphabet, realistic","num_outputs":4,"prompt":"abc, clip art"},
-            "output": ["https://replicate.delivery/123.png", "https://replicate.delivery/456.png"]
+            "output": ["https://replicate.delivery/123.png"]
         }
         """);
         var generatedPrompt = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
@@ -51,7 +51,7 @@ public class ReplicateAiServiceTest : TestBase
         var base64Image = "data:image/png;base64," + Convert.ToBase64String(Encoding.ASCII.GetBytes(imageAsString));
         
         var result = await ReplicateAiService.GenerateImage("any");
-        Assert.AreEqual(2, result.Count);
+        Assert.AreEqual(4, result.Count);
         Assert.AreEqual(base64Image, result[0]);
         Assert.AreEqual(base64Image, result[1]);
     }

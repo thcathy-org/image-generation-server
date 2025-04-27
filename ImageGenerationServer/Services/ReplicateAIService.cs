@@ -38,18 +38,25 @@ public class ReplicateAiService : IReplicateAiService
 
     public async Task<List<string>> GenerateImage(string keyword)
     {
+        var base64Images = new List<string>();
         try
         {
-            var imagePrompt = await GenerateImagePrompt(keyword);
-            var response = await SubmitFluxRequest(imagePrompt);
-            var urls = await PollResult(response);
-            return urls.Select(url => ToBase64Image(url).Result).ToList();
+            for (var i = 0; i < 4; i++)
+            {
+                var imagePrompt = await GenerateImagePrompt(keyword);
+                var response = await SubmitFluxRequest(imagePrompt);
+                var urls = await PollResult(response);
+                var base64Image = await ToBase64Image(urls.First());
+                base64Images.Add(base64Image);
+            }
         }
         catch (Exception e)
         {
             Log.Error(e, "Error when generate image");
-            return new List<string>();
+            return base64Images;
         }
+
+        return base64Images;
     }
     
     private async ValueTask<string> SubmitFluxRequest(string imagePrompt)
@@ -63,7 +70,7 @@ public class ReplicateAiService : IReplicateAiService
                 prompt = $"{imagePrompt}\nPrefer cartoon or clipart style.",
                 output_format = "png",
                 aspect_ratio = "1:1",
-                num_outputs = 4,
+                num_outputs = 1,
                 megapixels = "0.25",
             }
         });
@@ -121,7 +128,8 @@ public class ReplicateAiService : IReplicateAiService
         {
             prompt,
             maxTokens = 512,
-            maxNewTokens = 512
+            maxNewTokens = 512,
+            temperature = 1.5
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions");
