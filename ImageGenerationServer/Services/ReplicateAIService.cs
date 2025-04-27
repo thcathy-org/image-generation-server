@@ -129,7 +129,7 @@ public class ReplicateAiService : IReplicateAiService
             prompt,
             maxTokens = 512,
             maxNewTokens = 512,
-            temperature = 1.5
+            temperature = 1
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions");
