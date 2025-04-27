@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using ImageGenerationServer.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -33,8 +34,8 @@ public class ReplicateAiServiceTest : TestBase
     [TestMethod]
     public async Task GenerateImage_SuccessdedRespond_ReturnBase64Images()
     {
-        _mockHttp.When(_options.Value.BaseUrl).Respond("application/json", "{\"id\":\"testId\"}");
-        _mockHttp.When($"{_options.Value.BaseUrl}/testId").Respond("application/json", """
+        _mockHttp.When($"{_options.Value.BaseUrl}/models/black-forest-labs/flux-schnell/predictions").Respond("application/json", "{\"id\":\"testId\"}");
+        _mockHttp.When($"{_options.Value.BaseUrl}/predictions/testId").Respond("application/json", """
         {
             "id": "testId",
             "status": "succeeded",
@@ -42,6 +43,9 @@ public class ReplicateAiServiceTest : TestBase
             "output": ["https://replicate.delivery/123.png", "https://replicate.delivery/456.png"]
         }
         """);
+        var generatedPrompt = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions")
+            .Respond("application/json", $"{{ \"output\": {JsonSerializer.Serialize(generatedPrompt)} }}");
         _mockHttp.When("https://replicate.delivery/*").Respond("text/plain","bytes of image");
         var imageAsString = "bytes of image";
         var base64Image = "data:image/png;base64," + Convert.ToBase64String(Encoding.ASCII.GetBytes(imageAsString));
@@ -51,5 +55,29 @@ public class ReplicateAiServiceTest : TestBase
         Assert.AreEqual(base64Image, result[0]);
         Assert.AreEqual(base64Image, result[1]);
     }
-
+    
+    [TestMethod]
+    public async Task GenerateImagePrompt_SuccessfulResponse_ReturnPrompt()
+    {
+        var expectedOutput = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
+        var responseJson = $"{{ \"output\": {JsonSerializer.Serialize(expectedOutput)} }}";
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions")
+            .Respond("application/json", responseJson);
+        
+        // Act
+        var result = await ReplicateAiService.GenerateImagePrompt("test term");
+        
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual("A colorful cartoon depicting a test term", result);
+    }
+    
+    [TestMethod]
+    public async Task GenerateImagePrompt_ErrorResponse_ThrowsException()
+    {
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions")
+            .Respond(HttpStatusCode.InternalServerError);
+        await Assert.ThrowsExceptionAsync<HttpRequestException>(
+            async () => await ReplicateAiService.GenerateImagePrompt("test term"));
+    }
 }

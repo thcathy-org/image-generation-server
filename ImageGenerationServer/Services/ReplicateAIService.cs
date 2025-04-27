@@ -15,30 +15,16 @@ public class ReplicateAiServiceOptions
 public interface IReplicateAiService
 {
     Task<List<string>> GenerateImage(string keyword);
+    Task<string> GenerateImagePrompt(string term);
 }
 
-public enum Model
+internal class PredictionResponse
 {
-    STABLE_DIFFUSION, STABLE_DIFFUSION_XL
-}
-
-public static class ModelExtension
-{
-    public static string Version(this Model model)
-    {
-        return model switch
-        {
-            Model.STABLE_DIFFUSION => "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
-            Model.STABLE_DIFFUSION_XL => "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-            _ => throw new ArgumentOutOfRangeException(nameof(model), model, null)
-        };
-    }
+    public List<string>? Output { get; set; }
 }
 
 public class ReplicateAiService : IReplicateAiService
 {
-    private const string BasePrompt = "a cartoon style of what written inside \"\"\". \n\n\"\"\"{keyword}\"\"\"";
-    private const string BaseNegativePrompt = "English characters, English alphabet, text, letters, words";
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
 
     private readonly ReplicateAiServiceOptions _options;
@@ -54,7 +40,8 @@ public class ReplicateAiService : IReplicateAiService
     {
         try
         {
-            var response = await SubmitRequest(keyword);
+            var imagePrompt = await GenerateImagePrompt(keyword);
+            var response = await SubmitFluxRequest(imagePrompt);
             var urls = await PollResult(response);
             return urls.Select(url => ToBase64Image(url).Result).ToList();
         }
@@ -64,34 +51,33 @@ public class ReplicateAiService : IReplicateAiService
             return new List<string>();
         }
     }
-
-    private async ValueTask<string> SubmitRequest(string keyword)
+    
+    private async ValueTask<string> SubmitFluxRequest(string imagePrompt)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, _options.BaseUrl);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/black-forest-labs/flux-schnell/predictions");
         request.Headers.Add("Authorization", $"Token {_options.Token}");
         var payload = JsonConvert.SerializeObject(new
         {
-            version = Model.STABLE_DIFFUSION_XL.Version(),
             input = new
             {
-                prompt = BasePrompt.Replace("{keyword}", keyword),
-                // image_dimensions = "512x512",    // for SD
-                height = 512,     // for SDXL
-                width = 512,      // for SDXL
-                negative_prompt = BaseNegativePrompt,
+                prompt = $"{imagePrompt}\nPrefer cartoon or clipart style.",
+                output_format = "png",
+                aspect_ratio = "1:1",
                 num_outputs = 4,
+                megapixels = "0.25",
             }
         });
         request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
         var response = await _httpClient.SendAsync(request);
         var json = await response.Content.ReadAsStringAsync();
-        Log.Information("response: {Message}", json);
+        Log.Information("response: {json}", json);
         response.EnsureSuccessStatusCode();
         return JObject.Parse(json).Value<string>("id")!;
     }
 
     private async ValueTask<string> ToBase64Image(string url)
     {
+        Console.WriteLine($"ToBase64Image: {url}");
         using var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
         
@@ -108,7 +94,7 @@ public class ReplicateAiService : IReplicateAiService
         var startTime = DateTime.Now;
         while (DateTime.Now - startTime < Timeout)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.BaseUrl}/{id}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.BaseUrl}/predictions/{id}");
             request.Headers.Add("Authorization", $"Token {_options.Token}");
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -124,5 +110,33 @@ public class ReplicateAiService : IReplicateAiService
             Thread.Sleep(TimeSpan.FromSeconds(3));
         }
         throw new TimeoutException("Timeout when generating images");
+    }
+
+    public async Task<string> GenerateImagePrompt(string term)
+    {
+        Log.Information($"generated image prompt for: '{term}'");
+        var prompt = $"You are a text to image prompt writer. Write a prompt for a text to image model (flux.1-schnell) to generate a image which represent the meaning of '{term}', the prompt must not quote the quoted text. The image should not contain any text or English character. Prefer in cartoon or clipart style. Only output the prompt you generated.";
+
+        var input = new
+        {
+            prompt,
+            maxTokens = 512,
+            maxNewTokens = 512
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions");
+        request.Headers.Add("Prefer", "wait");
+        request.Headers.Add("Authorization", $"Token {_options.Token}");
+        request.Content = new StringContent(JsonConvert.SerializeObject(new { input }), Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var predictionResponse = JsonConvert.DeserializeObject<PredictionResponse>(jsonResponse);
+        var imagePrompt = string.Join("", predictionResponse.Output);
+        Log.Information($"generated image prompt: {imagePrompt}");
+        return imagePrompt;
+
     }
 }
