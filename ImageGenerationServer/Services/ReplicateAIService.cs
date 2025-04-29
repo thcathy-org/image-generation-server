@@ -41,7 +41,7 @@ public class ReplicateAiService : IReplicateAiService
         var base64Images = new List<string>();
         try
         {
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var imagePrompt = await GenerateImagePrompt(keyword);
                 var response = await SubmitFluxRequest(imagePrompt);
@@ -68,7 +68,7 @@ public class ReplicateAiService : IReplicateAiService
             input = new
             {
                 prompt = $"{imagePrompt}\nPrefer cartoon or clipart style.",
-                output_format = "png",
+                output_format = "jpg",
                 aspect_ratio = "1:1",
                 num_outputs = 1,
                 megapixels = "0.25",
