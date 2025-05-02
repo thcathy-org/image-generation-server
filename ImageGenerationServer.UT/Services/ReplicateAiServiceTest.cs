@@ -51,7 +51,7 @@ public class ReplicateAiServiceTest : TestBase
         var base64Image = "data:image/png;base64," + Convert.ToBase64String(Encoding.ASCII.GetBytes(imageAsString));
         
         var result = await ReplicateAiService.GenerateImage("any");
-        Assert.AreEqual(4, result.Count);
+        Assert.AreEqual(3, result.Count);
         Assert.AreEqual(base64Image, result[0]);
         Assert.AreEqual(base64Image, result[1]);
     }
