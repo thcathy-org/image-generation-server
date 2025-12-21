@@ -1,5 +1,5 @@
 # image-generation-server
-A micro service to generate AI image for English vocabulary learning application (www.funfunspell.com)
+A micro service to generate AI image for English vocabulary learning application (www.funfunspell.com) 
 
 ## Dependencies
 
