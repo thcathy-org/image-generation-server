@@ -26,6 +26,8 @@ internal class PredictionResponse
 public class ReplicateAiService : IReplicateAiService
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
+    private const int MaxImageCount = 3;
+    private const double PromptTemperature = 0.3;
 
     private readonly ReplicateAiServiceOptions _options;
     private readonly HttpClient _httpClient;
@@ -39,9 +41,9 @@ public class ReplicateAiService : IReplicateAiService
     public async Task<List<string>> GenerateImage(string keyword)
     {
         var base64Images = new List<string>();
-        try
+        for (var imageIndex = 0; imageIndex < MaxImageCount; imageIndex++)
         {
-            for (var i = 0; i < 3; i++)
+            try
             {
                 var imagePrompt = await GenerateImagePrompt(keyword);
                 var response = await SubmitFluxRequest(imagePrompt);
@@ -49,11 +51,12 @@ public class ReplicateAiService : IReplicateAiService
                 var base64Image = await ToBase64Image(urls.First());
                 base64Images.Add(base64Image);
             }
-        }
-        catch (Exception e)
-        {
-            Log.Error(e, "Error when generate image");
-            return base64Images;
+            catch (Exception e)
+            {
+                Log.Error(e,
+                    "Error when generating image for keyword '{Keyword}'. imageIndex={ImageIndex}",
+                    keyword, imageIndex);
+            }
         }
 
         return base64Images;
@@ -67,7 +70,7 @@ public class ReplicateAiService : IReplicateAiService
         {
             input = new
             {
-                prompt = $"{imagePrompt}\nPrefer cartoon or clipart style.",
+                prompt = imagePrompt,
                 output_format = "jpg",
                 aspect_ratio = "1:1",
                 num_outputs = 1,
@@ -122,14 +125,22 @@ public class ReplicateAiService : IReplicateAiService
     public async Task<string> GenerateImagePrompt(string term)
     {
         Log.Information($"generated image prompt for: '{term}'");
-        var prompt = $"You are a text to image prompt writer. Write a prompt for a text to image model (flux.1-schnell) to generate a image which represent the meaning of '{term}', the prompt must not quote the quoted text. The image should not contain any text or English character. Prefer in cartoon or clipart style. Only output the prompt you generated.";
+        var prompt =
+            $"You are a safe text-to-image prompt writer for ESL learning. " +
+            $"Write one concise prompt for flux.1-schnell that represents the meaning of '{term}'. " +
+            $"The output image must be child-safe and classroom-friendly. " +
+            $"No nudity, no sexual content, no suggestive pose, no gore, no blood, no violence, no self-harm, no abuse, no weapons. " +
+            $"Use symbolic and non-human visual metaphors only. Avoid any potentially sensitive interpretation. " +
+            $"The image should not contain text, letters, logos, or watermark. " +
+            $"Prefer cartoon or clipart style. " +
+            $"Return only the prompt text.";
 
         var input = new
         {
             prompt,
             maxTokens = 512,
             maxNewTokens = 512,
-            temperature = 1
+            temperature = PromptTemperature
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions");
