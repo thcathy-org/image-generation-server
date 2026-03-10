@@ -126,11 +126,10 @@ public class ReplicateAiService : IReplicateAiService
     {
         Log.Information($"generated image prompt for: '{term}'");
         var prompt =
-            $"You are a safe text-to-image prompt writer for ESL learning. " +
+            $"You are a safe text-to-image prompt writer for English learning. " +
             $"Write one concise prompt for flux.1-schnell that represents the meaning of '{term}'. " +
             $"The output image must be child-safe and classroom-friendly. " +
             $"No nudity, no sexual content, no suggestive pose, no gore, no blood, no violence, no self-harm, no abuse, no weapons. " +
-            $"Use symbolic and non-human visual metaphors only. Avoid any potentially sensitive interpretation. " +
             $"The image should not contain text, letters, logos, or watermark. " +
             $"Prefer cartoon or clipart style. " +
             $"Return only the prompt text.";
