@@ -137,12 +137,11 @@ public class ReplicateAiService : IReplicateAiService
         var input = new
         {
             prompt,
-            maxTokens = 512,
-            maxNewTokens = 512,
+            max_tokens = 512,
             temperature = PromptTemperature
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/meta/meta-llama-3-8b-instruct/predictions");
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/openai/gpt-5-nano/predictions");
         request.Headers.Add("Prefer", "wait");
         request.Headers.Add("Authorization", $"Token {_options.Token}");
         request.Content = new StringContent(JsonConvert.SerializeObject(new { input }), Encoding.UTF8, "application/json");
