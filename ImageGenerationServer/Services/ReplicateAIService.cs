@@ -10,6 +10,7 @@ public class ReplicateAiServiceOptions
 {
     public string? BaseUrl { get; init; }
     public string? Token { get; init; }
+    public string? PromptModel { get; init; }
 }
 
 public interface IReplicateAiService
@@ -141,7 +142,7 @@ public class ReplicateAiService : IReplicateAiService
             temperature = PromptTemperature
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/openai/gpt-5-nano/predictions");
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/{_options.PromptModel}/predictions");
         request.Headers.Add("Prefer", "wait");
         request.Headers.Add("Authorization", $"Token {_options.Token}");
         request.Content = new StringContent(JsonConvert.SerializeObject(new { input }), Encoding.UTF8, "application/json");
