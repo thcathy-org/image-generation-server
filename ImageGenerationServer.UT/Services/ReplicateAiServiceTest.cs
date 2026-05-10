@@ -44,7 +44,7 @@ public class ReplicateAiServiceTest : TestBase
         }
         """);
         var generatedPrompt = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
-        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/openai/gpt-5-nano/predictions")
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
             .Respond("application/json", $"{{ \"output\": {JsonSerializer.Serialize(generatedPrompt)} }}");
         _mockHttp.When("https://replicate.delivery/*").Respond("text/plain","bytes of image");
         var imageAsString = "bytes of image";
@@ -61,7 +61,7 @@ public class ReplicateAiServiceTest : TestBase
     {
         var expectedOutput = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
         var responseJson = $"{{ \"output\": {JsonSerializer.Serialize(expectedOutput)} }}";
-        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/openai/gpt-5-nano/predictions")
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
             .Respond("application/json", responseJson);
         
         // Act
@@ -75,7 +75,7 @@ public class ReplicateAiServiceTest : TestBase
     [TestMethod]
     public async Task GenerateImagePrompt_ErrorResponse_ThrowsException()
     {
-        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/openai/gpt-5-nano/predictions")
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
             .Respond(HttpStatusCode.InternalServerError);
         await Assert.ThrowsExceptionAsync<HttpRequestException>(
             async () => await ReplicateAiService.GenerateImagePrompt("test term"));
