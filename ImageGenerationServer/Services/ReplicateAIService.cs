@@ -11,6 +11,8 @@ public class ReplicateAiServiceOptions
     public string? BaseUrl { get; init; }
     public string? Token { get; init; }
     public string? PromptModel { get; init; }
+    public string ImageModel { get; init; } = "black-forest-labs/flux-2-klein-4b";
+    public string OutputMegapixels { get; init; } = "0.25";
 }
 
 public interface IReplicateAiService
@@ -65,7 +67,7 @@ public class ReplicateAiService : IReplicateAiService
     
     private async ValueTask<string> SubmitFluxRequest(string imagePrompt)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/black-forest-labs/flux-schnell/predictions");
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/{_options.ImageModel}/predictions");
         request.Headers.Add("Authorization", $"Token {_options.Token}");
         var payload = JsonConvert.SerializeObject(new
         {
@@ -74,8 +76,7 @@ public class ReplicateAiService : IReplicateAiService
                 prompt = imagePrompt,
                 output_format = "jpg",
                 aspect_ratio = "1:1",
-                num_outputs = 1,
-                megapixels = "0.25",
+                output_megapixels = _options.OutputMegapixels,
             }
         });
         request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
@@ -127,13 +128,17 @@ public class ReplicateAiService : IReplicateAiService
     {
         Log.Information($"generated image prompt for: '{term}'");
         var prompt =
-            $"You are a safe text-to-image prompt writer for English learning. " +
-            $"Write one concise prompt for flux.1-schnell that represents the meaning of '{term}'. " +
-            $"The output image must be child-safe and classroom-friendly. " +
-            $"No nudity, no sexual content, no suggestive pose, no gore, no blood, no violence, no self-harm, no abuse, no weapons. " +
-            $"The image should not contain text, letters, logos, or watermark. " +
-            $"Prefer cartoon or clipart style. " +
-            $"Return only the prompt text.";
+            $"You write text-to-image prompts for a children's English-learning app. " +
+            $"Produce ONE concise prompt (1-2 sentences) that visually represents the meaning of '{term}'. " +
+            $"Style: flat cartoon / clipart, bright friendly colors, simple clean composition. " +
+            $"Structure the prompt as: main subject, then setting, then style. " +
+            $"The scene must be wholesome and classroom-appropriate, depicting only safe, " +
+            $"everyday, friendly content suitable for young children. " +
+            $"Describe only what SHOULD appear — never use negative phrasing like 'no X' " +
+            $"(the image model does not support negatives). " +
+            $"Do not include any text, letters, numbers, logos, or watermarks in the described image. " +
+            $"If '{term}' cannot be shown in a child-safe way, depict a safe, neutral related concept instead. " +
+            $"Return only the prompt text, no quotes or preamble.";
 
         var input = new
         {

@@ -34,7 +34,7 @@ public class ReplicateAiServiceTest : TestBase
     [TestMethod]
     public async Task GenerateImage_SuccessdedRespond_ReturnBase64Images()
     {
-        _mockHttp.When($"{_options.Value.BaseUrl}/models/black-forest-labs/flux-schnell/predictions").Respond("application/json", "{\"id\":\"testId\"}");
+        _mockHttp.When($"{_options.Value.BaseUrl}/models/{_options.Value.ImageModel}/predictions").Respond("application/json", "{\"id\":\"testId\"}");
         _mockHttp.When($"{_options.Value.BaseUrl}/predictions/testId").Respond("application/json", """
         {
             "id": "testId",
