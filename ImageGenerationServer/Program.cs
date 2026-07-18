@@ -12,11 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<ApiKeyMiddlewareOptions>(builder.Configuration.GetSection(nameof(ApiKeyMiddlewareOptions)));
 builder.Services.Configure<ReplicateAiServiceOptions>(builder.Configuration.GetSection(nameof(ReplicateAiServiceOptions)));
+builder.Services.Configure<LocalAiImageServiceOptions>(builder.Configuration.GetSection(nameof(LocalAiImageServiceOptions)));
+builder.Services.Configure<ImageGenerationServiceOptions>(builder.Configuration.GetSection(nameof(ImageGenerationServiceOptions)));
 builder.Services.Configure<FirebaseServiceOptions>(builder.Configuration.GetSection(nameof(FirebaseServiceOptions)));
 
 builder.Services.AddSingleton(Channel.CreateUnbounded<string>());
 builder.Services.AddSingleton<IFirebaseService, FirebaseService>();
 builder.Services.AddSingleton<IReplicateAiService, ReplicateAiService>();
+builder.Services.AddSingleton<ILocalAiImageService, LocalAiImageService>();
 builder.Services.AddSingleton<IVerifyService, VerifyService>();
 builder.Services.AddHostedService<ImageGenerationService>();
 builder.Services.AddScoped<IDataRepository, DataRepository>();

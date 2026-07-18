@@ -4,9 +4,15 @@ using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using ImageGenerationServer.DB;
 using ImageGenerationServer.DTO;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 namespace ImageGenerationServer.Services;
+
+public class ImageGenerationServiceOptions
+{
+    public string ImageProvider { get; init; } = "localai";
+}
 
 public class ImagesObject
 {
@@ -19,16 +25,21 @@ public partial class ImageGenerationService : BackgroundService
     private readonly ChannelReader<string> _channelReader;
     private readonly IServiceProvider _serviceProvider;
     private readonly IFirebaseService _firebaseService;
-    private readonly IReplicateAiService _replicateAiService; 
-    
+    private readonly IReplicateAiService _replicateAiService;
+    private readonly ILocalAiImageService _localAiImageService;
+    private readonly ImageGenerationServiceOptions _options;
+
     public ImageGenerationService(IServiceProvider serviceProvider,
-        Channel<string> channel, IFirebaseService firebaseService, 
-        IReplicateAiService replicateAiService)
+        Channel<string> channel, IFirebaseService firebaseService,
+        IReplicateAiService replicateAiService, ILocalAiImageService localAiImageService,
+        IOptions<ImageGenerationServiceOptions> options)
     {
         _channelReader = channel.Reader;
         _serviceProvider = serviceProvider;
         _firebaseService = firebaseService;
         _replicateAiService = replicateAiService;
+        _localAiImageService = localAiImageService;
+        _options = options.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -50,7 +61,7 @@ public partial class ImageGenerationService : BackgroundService
                 continue;
             }
 
-            var base64Images = await _replicateAiService.GenerateImage(phrase);
+            var base64Images = await GenerateImagesAsync(phrase);
             if (!base64Images.Any())
             {
                 Log.Information("No images generated for [{Phrase}]", phrase);
@@ -67,6 +78,38 @@ public partial class ImageGenerationService : BackgroundService
         }
 
         Log.Information("ImageGenerationService background task is stopping");
+    }
+
+    internal async Task<List<string>> GenerateImagesAsync(string phrase)
+    {
+        List<string> prompts;
+        try
+        {
+            prompts = await _replicateAiService.GenerateImagePrompts(phrase);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to generate image prompts for [{Phrase}]", phrase);
+            return new List<string>();
+        }
+
+        var base64Images = new List<string>();
+        for (var i = 0; i < prompts.Count; i++)
+        {
+            try
+            {
+                var img = _options.ImageProvider == "replicate"
+                    ? await _replicateAiService.GenerateImageFromPrompt(prompts[i])
+                    : await _localAiImageService.GenerateBase64ImageAsync(prompts[i]);
+                base64Images.Add(img);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "image {Index} failed for {Phrase}", i, phrase);
+            }
+        }
+
+        return base64Images;
     }
 
     private async Task AddToPendingIfNeeded(Stream? stream, string phrase)

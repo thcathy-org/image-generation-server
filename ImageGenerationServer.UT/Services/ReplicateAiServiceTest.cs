@@ -24,60 +24,58 @@ public class ReplicateAiServiceTest : TestBase
     }
 
     [TestMethod]
-    public async Task GenerateImage_ErrorWhenSubmit_ReturnEmpty()
+    public async Task GenerateImagePrompts_SuccessfulResponse_ReturnsThreePrompts()
     {
-        _mockHttp.When("https://*").Respond(HttpStatusCode.InternalServerError);
-        var result = await ReplicateAiService.GenerateImage("any");
-        Assert.AreEqual(0, result.Count);
+        var expectedOutput = new List<string>
+        {
+            "1. A colorful cartoon apple on a desk. ",
+            "2. A red apple in a picnic basket outdoors. ",
+            "3. A teacher holding an apple in a classroom."
+        };
+        var responseJson = $"{{ \"output\": {JsonSerializer.Serialize(expectedOutput)} }}";
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
+            .Respond("application/json", responseJson);
+
+        var result = await ReplicateAiService.GenerateImagePrompts("apple");
+
+        Assert.AreEqual(3, result.Count);
+        Assert.AreEqual("A colorful cartoon apple on a desk.", result[0]);
+        Assert.AreEqual("A red apple in a picnic basket outdoors.", result[1]);
+        Assert.AreEqual("A teacher holding an apple in a classroom.", result[2]);
     }
 
     [TestMethod]
-    public async Task GenerateImage_SuccessdedRespond_ReturnBase64Images()
+    public async Task GenerateImagePrompts_InvalidCount_ThrowsInvalidOperationException()
     {
-        _mockHttp.When($"{_options.Value.BaseUrl}/models/{_options.Value.ImageModel}/predictions").Respond("application/json", "{\"id\":\"testId\"}");
+        var expectedOutput = new List<string> { "1. Only one prompt." };
+        var responseJson = $"{{ \"output\": {JsonSerializer.Serialize(expectedOutput)} }}";
+        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
+            .Respond("application/json", responseJson);
+
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            async () => await ReplicateAiService.GenerateImagePrompts("apple"));
+    }
+
+    [TestMethod]
+    public async Task GenerateImageFromPrompt_Success_ReturnsBase64Image()
+    {
+        _mockHttp.When($"{_options.Value.BaseUrl}/models/{_options.Value.ImageModel}/predictions")
+            .Respond("application/json", "{\"id\":\"testId\"}");
         _mockHttp.When($"{_options.Value.BaseUrl}/predictions/testId").Respond("application/json", """
         {
             "id": "testId",
             "status": "succeeded",
-            "input":{"image_dimensions":"512x512","negative_prompt":"english characters, alphabet, realistic","num_outputs":4,"prompt":"abc, clip art"},
+            "input":{"prompt":"abc, clip art"},
             "output": ["https://replicate.delivery/123.png"]
         }
         """);
-        var generatedPrompt = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
-        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
-            .Respond("application/json", $"{{ \"output\": {JsonSerializer.Serialize(generatedPrompt)} }}");
-        _mockHttp.When("https://replicate.delivery/*").Respond("text/plain","bytes of image");
+        _mockHttp.When("https://replicate.delivery/*").Respond("text/plain", "bytes of image");
+
         var imageAsString = "bytes of image";
         var base64Image = "data:image/png;base64," + Convert.ToBase64String(Encoding.ASCII.GetBytes(imageAsString));
-        
-        var result = await ReplicateAiService.GenerateImage("any");
-        Assert.AreEqual(3, result.Count);
-        Assert.AreEqual(base64Image, result[0]);
-        Assert.AreEqual(base64Image, result[1]);
-    }
-    
-    [TestMethod]
-    public async Task GenerateImagePrompt_SuccessfulResponse_ReturnPrompt()
-    {
-        var expectedOutput = new List<string> { "A ", "colorful ", "cartoon ", "depicting ", "a ", "test ", "term" };
-        var responseJson = $"{{ \"output\": {JsonSerializer.Serialize(expectedOutput)} }}";
-        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
-            .Respond("application/json", responseJson);
-        
-        // Act
-        var result = await ReplicateAiService.GenerateImagePrompt("test term");
-        
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual("A colorful cartoon depicting a test term", result);
-    }
-    
-    [TestMethod]
-    public async Task GenerateImagePrompt_ErrorResponse_ThrowsException()
-    {
-        _mockHttp.When(HttpMethod.Post, $"{_options.Value.BaseUrl}/models/{_options.Value.PromptModel}/predictions")
-            .Respond(HttpStatusCode.InternalServerError);
-        await Assert.ThrowsExceptionAsync<HttpRequestException>(
-            async () => await ReplicateAiService.GenerateImagePrompt("test term"));
+
+        var result = await ReplicateAiService.GenerateImageFromPrompt("abc, clip art");
+
+        Assert.AreEqual(base64Image, result);
     }
 }

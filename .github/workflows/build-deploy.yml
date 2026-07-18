@@ -104,6 +104,8 @@ jobs:
             -e docker_image_tag=${{ needs.get-version.outputs.docker_image_tag }}
             -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
             -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
+            -e localai_url=${{ secrets.LOCALAI_URL }}
+            -e localai_api_key=${{ secrets.LOCALAI_API_KEY }}
             -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
   deploy-k8s-prod:
     runs-on: ubuntu-latest
@@ -123,4 +125,6 @@ jobs:
             -e docker_image_tag=${{ needs.get-version.outputs.docker_image_tag }}
             -e APIKEYMIDDLEWAREOPTIONS__APIKEYS=${{ secrets.APIKEYMIDDLEWAREOPTIONS__APIKEYS }} 
             -e ReplicateAiServiceOptions__Token=${{ secrets.REPLICATEAISERVICEOPTIONS__TOKEN }} 
+            -e localai_url=${{ secrets.LOCALAI_URL }}
+            -e localai_api_key=${{ secrets.LOCALAI_API_KEY }}
             -e GOOGLE_APPLICATION_CREDENTIALS_JSON=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}

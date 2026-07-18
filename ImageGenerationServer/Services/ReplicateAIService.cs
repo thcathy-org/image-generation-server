@@ -11,14 +11,16 @@ public class ReplicateAiServiceOptions
     public string? BaseUrl { get; init; }
     public string? Token { get; init; }
     public string? PromptModel { get; init; }
+    public int PromptMaxTokens { get; init; } = 512;
+    public double PromptTemperature { get; init; } = 0.3;
     public string ImageModel { get; init; } = "black-forest-labs/flux-2-klein-4b";
     public string OutputMegapixels { get; init; } = "0.25";
 }
 
 public interface IReplicateAiService
 {
-    Task<List<string>> GenerateImage(string keyword);
-    Task<string> GenerateImagePrompt(string term);
+    Task<List<string>> GenerateImagePrompts(string term);
+    Task<string> GenerateImageFromPrompt(string prompt);
 }
 
 internal class PredictionResponse
@@ -29,8 +31,6 @@ internal class PredictionResponse
 public class ReplicateAiService : IReplicateAiService
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
-    private const int MaxImageCount = 3;
-    private const double PromptTemperature = 0.3;
 
     private readonly ReplicateAiServiceOptions _options;
     private readonly HttpClient _httpClient;
@@ -41,30 +41,6 @@ public class ReplicateAiService : IReplicateAiService
         _httpClient = httpClient;
     }
 
-    public async Task<List<string>> GenerateImage(string keyword)
-    {
-        var base64Images = new List<string>();
-        for (var imageIndex = 0; imageIndex < MaxImageCount; imageIndex++)
-        {
-            try
-            {
-                var imagePrompt = await GenerateImagePrompt(keyword);
-                var response = await SubmitFluxRequest(imagePrompt);
-                var urls = await PollResult(response);
-                var base64Image = await ToBase64Image(urls.First());
-                base64Images.Add(base64Image);
-            }
-            catch (Exception e)
-            {
-                Log.Error(e,
-                    "Error when generating image for keyword '{Keyword}'. imageIndex={ImageIndex}",
-                    keyword, imageIndex);
-            }
-        }
-
-        return base64Images;
-    }
-    
     private async ValueTask<string> SubmitFluxRequest(string imagePrompt)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/{_options.ImageModel}/predictions");
@@ -124,27 +100,36 @@ public class ReplicateAiService : IReplicateAiService
         throw new TimeoutException("Timeout when generating images");
     }
 
-    public async Task<string> GenerateImagePrompt(string term)
+    public async Task<string> GenerateImageFromPrompt(string prompt)
     {
-        Log.Information($"generated image prompt for: '{term}'");
+        var response = await SubmitFluxRequest(prompt);
+        var urls = await PollResult(response);
+        return await ToBase64Image(urls.First());
+    }
+
+    public async Task<List<string>> GenerateImagePrompts(string term)
+    {
+        Log.Information("Generating image prompts for: '{Term}'", term);
         var prompt =
             $"You write text-to-image prompts for a children's English-learning app. " +
-            $"Produce ONE concise prompt (1-2 sentences) that visually represents the meaning of '{term}'. " +
+            $"Produce exactly THREE numbered prompts (1., 2., 3.) that visually represent the meaning of '{term}'. " +
+            $"Each prompt should be 1-2 sentences. " +
+            $"Vary setting, viewpoint, or a safe related concept across the three prompts. " +
             $"Style: flat cartoon / clipart, bright friendly colors, simple clean composition. " +
-            $"Structure the prompt as: main subject, then setting, then style. " +
-            $"The scene must be wholesome and classroom-appropriate, depicting only safe, " +
+            $"Structure each prompt as: main subject, then setting, then style. " +
+            $"The scenes must be wholesome and classroom-appropriate, depicting only safe, " +
             $"everyday, friendly content suitable for young children. " +
             $"Describe only what SHOULD appear — never use negative phrasing like 'no X' " +
             $"(the image model does not support negatives). " +
             $"Do not include any text, letters, numbers, logos, or watermarks in the described image. " +
             $"If '{term}' cannot be shown in a child-safe way, depict a safe, neutral related concept instead. " +
-            $"Return only the prompt text, no quotes or preamble.";
+            $"Return only the three numbered prompts, no quotes or preamble.";
 
         var input = new
         {
             prompt,
-            max_tokens = 512,
-            temperature = PromptTemperature
+            max_tokens = _options.PromptMaxTokens,
+            temperature = _options.PromptTemperature
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"{_options.BaseUrl}/models/{_options.PromptModel}/predictions");
@@ -157,9 +142,32 @@ public class ReplicateAiService : IReplicateAiService
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var predictionResponse = JsonConvert.DeserializeObject<PredictionResponse>(jsonResponse);
-        var imagePrompt = string.Join("", predictionResponse.Output);
-        Log.Information($"generated image prompt: {imagePrompt}");
-        return imagePrompt;
+        var rawOutput = string.Join("", predictionResponse?.Output ?? new List<string>());
+        Log.Information("Generated image prompts: {Prompts}", rawOutput);
+        return ParseNumberedPrompts(rawOutput);
+    }
 
+    internal static List<string> ParseNumberedPrompts(string rawOutput)
+    {
+        var prompts = new List<string>();
+        for (var i = 1; i <= 3; i++)
+        {
+            var next = i + 1;
+            var pattern = next <= 3
+                ? $@"{i}\.\s*(.+?)(?=\s*{next}\.)"
+                : $@"{i}\.\s*(.+)$";
+            var match = System.Text.RegularExpressions.Regex.Match(
+                rawOutput,
+                pattern,
+                System.Text.RegularExpressions.RegexOptions.Singleline);
+            if (!match.Success)
+            {
+                throw new InvalidOperationException($"Expected exactly 3 image prompts, got {prompts.Count}");
+            }
+
+            prompts.Add(match.Groups[1].Value.Trim());
+        }
+
+        return prompts;
     }
 }

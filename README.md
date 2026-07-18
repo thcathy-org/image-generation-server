@@ -17,4 +17,7 @@ ReplicateAiServiceOptions__Token=<API Token to access Replicate.com>
 GoogleApplicationCredentials=<JSON file to access google cloud>
 
 ApiKeyMiddlewareOptions__ApiKeys=<API Keys for client access this service>
+
+LocalAiImageServiceOptions__BaseUrl=<LocalAI base URL>
+LocalAiImageServiceOptions__ApiKey=<LocalAI API key>
 ```

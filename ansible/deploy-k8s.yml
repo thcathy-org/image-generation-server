@@ -44,6 +44,8 @@
           stringData:
             ApiKeyMiddlewareOptions__ApiKeys: "{{ APIKEYMIDDLEWAREOPTIONS__APIKEYS }}"
             ReplicateAiServiceOptions__Token: "{{ ReplicateAiServiceOptions__Token }}"
+            LocalAiImageServiceOptions__BaseUrl: "{{ localai_url }}"
+            LocalAiImageServiceOptions__ApiKey: "{{ localai_api_key }}"
           data:
             GOOGLE_APPLICATION_CREDENTIALS_JSON: "{{ GOOGLE_APPLICATION_CREDENTIALS_JSON }}"
 

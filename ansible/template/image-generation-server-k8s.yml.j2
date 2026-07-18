@@ -30,6 +30,16 @@ spec:
             secretKeyRef:
               name: {{ app_name }}-secrets
               key: ReplicateAiServiceOptions__Token
+        - name: LocalAiImageServiceOptions__BaseUrl
+          valueFrom:
+            secretKeyRef:
+              name: {{ app_name }}-secrets
+              key: LocalAiImageServiceOptions__BaseUrl
+        - name: LocalAiImageServiceOptions__ApiKey
+          valueFrom:
+            secretKeyRef:
+              name: {{ app_name }}-secrets
+              key: LocalAiImageServiceOptions__ApiKey
         - name: GoogleApplicationCredentials
           value: /etc/secret-volume/GOOGLE_APPLICATION_CREDENTIALS_JSON
         - name: DOTNET_ENVIRONMENT
