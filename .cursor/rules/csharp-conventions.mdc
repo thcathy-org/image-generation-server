@@ -1,0 +1,35 @@
+---
+description: C# conventions for image-generation-server
+globs: **/*.cs
+alwaysApply: true
+---
+
+# C# Conventions
+
+## Local variables
+
+Use `var` when the type is obvious from the right-hand side.
+
+```csharp
+// ✅ preferred
+var audioBytes = await localAiImageService.GenerateBase64ImageAsync(prompt);
+
+// ❌ avoid when type is clear
+string audioBytes = await localAiImageService.GenerateBase64ImageAsync(prompt);
+```
+
+## Logging
+
+Use Serilog (`Log.Information`, `Log.Error`) — not `Console.WriteLine` in production code paths.
+
+## Configuration
+
+Inject options via `IOptions<T>` from `appsettings.json` sections. Env overrides use `__` (e.g. `ReplicateAiServiceOptions__Token`).
+
+## Async
+
+Prefer `async`/`await` over `.Result` or `.Wait()` on HTTP calls.
+
+## Scope
+
+Keep changes minimal — match existing patterns in `Services/` and `Controllers/`. Do not refactor unrelated code.

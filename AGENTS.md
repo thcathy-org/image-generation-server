@@ -38,6 +38,10 @@ Generate (requires API key): `POST /image/generate/{phrase}` with header `X-API-
 - Change prompt model without eval and updating `IMAGE_PROMPT_MODEL_DECISION.md`
 - Include Claude attribution in commit messages
 
+## Cursor rules
+
+Committed agent hints: [`.cursor/rules/`](./.cursor/rules/) (C# conventions). Workspace-level `esl-all/.cursor/rules/` is local-only — not source of truth for cloud agents.
+
 ## Deep context
 
 See [CLAUDE.md](./CLAUDE.md) for pipeline architecture, services, config, and verify workflow.
