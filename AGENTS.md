@@ -38,9 +38,11 @@ Generate (requires API key): `POST /image/generate/{phrase}` with header `X-API-
 - Change prompt model without eval and updating `IMAGE_PROMPT_MODEL_DECISION.md`
 - Include Claude attribution in commit messages
 
-## Cursor rules
+## Cursor agents & rules
 
-Committed agent hints: [`.cursor/rules/`](./.cursor/rules/) (C# conventions). Workspace-level `esl-all/.cursor/rules/` is local-only — not source of truth for cloud agents.
+Committed agents: [`.cursor/agents/`](./.cursor/agents/) — `esl-image-senior-dev` (design), `esl-image-programmer` (implement). They load stack/commands from this file, `.cursor/rules/`, and `CLAUDE.md` (do not hardcode stack in agent prompts). For `angular-admin` UI/UX, use `esl-uiux` (lives in `esl-ionic/.cursor/agents/` / workspace mirror).
+
+Committed rules: [`.cursor/rules/`](./.cursor/rules/). Workspace-level `esl-all/.cursor/` is local-only — not source of truth for cloud agents.
 
 ## Deep context
 
