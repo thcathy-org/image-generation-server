@@ -40,7 +40,17 @@ Generate (requires API key): `POST /image/generate/{phrase}` with header `X-API-
 
 ## Cursor agents & rules
 
-Committed agents: [`.cursor/agents/`](./.cursor/agents/) — `esl-image-senior-dev` (design), `esl-image-programmer` (implement). They load stack/commands from this file, `.cursor/rules/`, and `CLAUDE.md` (do not hardcode stack in agent prompts). For `angular-admin` UI/UX, use `esl-uiux` (lives in `esl-ionic/.cursor/agents/` / workspace mirror).
+Pipeline: **architect → implementer → reviewer → tester** (plus `esl-uiux` for `angular-admin` visuals)
+
+| Stage | Agent |
+|-------|--------|
+| Architect | `esl-image-senior-dev` |
+| Implementer | `esl-image-programmer` |
+| Reviewer | `esl-image-reviewer` |
+| Tester | `esl-image-tester` |
+| UX (admin) | `esl-uiux` (lives in `esl-ionic/.cursor/agents/` / workspace mirror) |
+
+Committed agents: [`.cursor/agents/`](./.cursor/agents/). They load stack/commands from this file, `.cursor/rules/`, and `CLAUDE.md` (do not hardcode stack in agent prompts).
 
 Committed rules: [`.cursor/rules/`](./.cursor/rules/). Workspace-level `esl-all/.cursor/` is local-only — not source of truth for cloud agents.
 
