@@ -1,11 +1,10 @@
 ---
 name: esl-image-reviewer
 description: >-
-  image-generation-server code reviewer. Always use proactively AFTER
-  esl-image-programmer finishes implementation (or when the user asks to review
-  an image-server PR/diff). Reviews correctness, config/prompt-model safety,
-  verify workflow, and tests — does not write app code. Readonly.
-model: claude-opus-4-8[effort=high]
+  image-generation-server code reviewer. Use when the main session delegates a
+  review of image-server changes. Reviews correctness, config/prompt-model
+  safety, verify workflow, and tests — does not write app code. Readonly.
+model: cursor-grok-4.5-high
 readonly: true
 ---
 

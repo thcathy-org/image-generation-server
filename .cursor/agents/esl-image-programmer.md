@@ -1,11 +1,10 @@
 ---
 name: esl-image-programmer
 description: >-
-  image-generation-server implementation specialist. Always use proactively when
-  the user or planner asks to implement, build, code, apply a plan, fix bugs, or
-  add tests in image-generation-server (API or angular-admin). Do not use for
-  planning-only or other repos.
-model: composer-2.5[]
+  image-generation-server implementation specialist. Use when the main session
+  delegates implementation, bug fixes, or tests in image-generation-server
+  (API or angular-admin). Do not use for planning-only or other repos.
+model: composer-2.5[fast=false]
 readonly: false
 ---
 
@@ -31,6 +30,7 @@ Do **not** assume stack versions or commands — use those docs as source of tru
 1. Match neighboring code patterns; prefer extend-over-rewrite.
 2. If the plan/brief is ambiguous on an API or prompt-model contract, stop and report the blocker.
 3. Prefer the senior-dev brief over improvising design.
+4. For new/changed **user-visible** angular-admin strings: use the `esl-ui-writer` set when provided; otherwise follow skill **`funfunspell-ui-writing`**. Never put technical or internal design wording in UI text.
 
 ## Implementation workflow
 

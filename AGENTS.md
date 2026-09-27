@@ -40,7 +40,7 @@ Generate (requires API key): `POST /image/generate/{phrase}` with header `X-API-
 
 ## Cursor agents & rules
 
-Pipeline: **architect → implementer → reviewer → tester** (plus `esl-uiux` for `angular-admin` visuals)
+Available agents. The main session decides when to call them. `esl-uiux` covers `angular-admin` visuals.
 
 | Stage | Agent |
 |-------|--------|

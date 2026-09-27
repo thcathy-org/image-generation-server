@@ -1,11 +1,11 @@
 ---
 name: esl-image-tester
 description: >-
-  image-generation-server test specialist. Always use proactively AFTER review
-  (or with review when the user asks to verify/test image-server changes).
-  Adds/updates focused .NET tests (and admin specs only when asked), runs narrow
-  dotnet test commands, and reports gaps. Does not change prompt-model policy.
-model: composer-2.5[]
+  image-generation-server test specialist. Use when the main session delegates
+  verification of image-server changes. Adds/updates focused .NET tests (and
+  admin specs only when asked), runs narrow dotnet test commands, and reports
+  gaps. Does not change prompt-model policy.
+model: composer-2.5[fast=false]
 readonly: false
 ---
 
