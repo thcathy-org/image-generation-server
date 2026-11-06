@@ -2,7 +2,7 @@
 
 ## Scope
 
-ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.com](https://www.funfunspell.com). Accepts phrase generation requests, writes images to Firebase Storage, and tracks a human verify workflow. Includes `angular-admin/` for reviewing pending phrases.
+ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.com](https://www.funfunspell.com). Accepts phrase generation requests and writes images to Firebase Storage. New images are available without pending verification. `POST /verify/verified` removes one image by index; `POST /verify/remove` deletes the phrase file. `angular-admin/` no longer runs the keep/remove workflow.
 
 ## Commands
 

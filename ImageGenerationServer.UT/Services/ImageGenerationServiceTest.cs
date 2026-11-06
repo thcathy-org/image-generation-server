@@ -67,6 +67,7 @@ public class ImageGenerationServiceTest : TestBase
         Assert.AreEqual(3, imagesObject.images.Length);
         Assert.AreEqual("localai:prompt one", imagesObject.images[0]);
         Assert.AreEqual(false, imagesObject.isVerify);
+        _repoMock.Verify(AddOrUpdateExpression, Times.Never);
         await uploadedStream!.DisposeAsync();
     }
 
@@ -92,6 +93,7 @@ public class ImageGenerationServiceTest : TestBase
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
         Assert.AreEqual(3, imagesObject.images.Length);
         Assert.AreEqual("replicate:prompt one", imagesObject.images[0]);
+        _repoMock.Verify(AddOrUpdateExpression, Times.Never);
         await uploadedStream!.DisposeAsync();
     }
 
@@ -138,10 +140,11 @@ public class ImageGenerationServiceTest : TestBase
     [DataTestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public async Task ExecuteAsync_IsPhraseVerify_DoNotAddToPending(bool isPhraseVerify)
+    public async Task ExecuteAsync_ExistingFile_DoesNotQueuePendingOrRewriteFirebase(bool isPhraseVerify)
     {
         var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
         {
+            images = new[] { "kept" },
             isVerify = isPhraseVerify
         })));
         _firebaseServiceMock.Setup(DownloadObjectAsyncExpression).ReturnsAsync(stream);
@@ -151,7 +154,9 @@ public class ImageGenerationServiceTest : TestBase
         await Task.Delay(100);
         await _service.StopAsync(CancellationToken.None);
 
-        _repoMock.Verify(AddOrUpdateExpression, isPhraseVerify ? Times.Never : Times.Once);
+        _repoMock.Verify(AddOrUpdateExpression, Times.Never);
+        _firebaseServiceMock.Verify(UploadObjectExpression, Times.Never);
+        _replicateAiServiceMock.Verify(m => m.GenerateImagePrompts(IsAny<string>()), Times.Never);
     }
 
     static readonly Expression<Action<IDataRepository>> AddOrUpdateExpression = m => m.AddOrUpdate(IsAny<PendingVerifyPhrase>());

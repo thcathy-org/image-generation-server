@@ -18,4 +18,10 @@ describe('ManageComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should retire the pending review workflow', () => {
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Pending image review is retired');
+    expect(text).not.toContain('Submit Verified');
+  });
 });
