@@ -14,7 +14,7 @@ public class ImageControllerTest : TestBase
     public ImageControllerTest()
     {
         _channel = Channel.CreateUnbounded<string>();
-        _controller = new ImageController(_channel, new DataContext());
+        _controller = new ImageController(_channel, new DataContext(), null!);
     }
 
     [TestMethod]

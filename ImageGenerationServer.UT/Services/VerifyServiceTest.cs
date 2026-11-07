@@ -47,6 +47,54 @@ public class VerifyServiceTest : TestBase
         Assert.AreEqual(true, imagesObject.isVerify);
         await uploadedStreamCaptured.DisposeAsync();
     }
+
+    [TestMethod]
+    public async Task RemoveImage_DropsOnlyThatIndexWhenOthersRemain()
+    {
+        Stream? uploaded = null;
+        var stream = new MemoryStream("""{ "images":["a","b","c"], "isVerify":false }"""u8.ToArray());
+        _firebaseServiceMock.Setup(DownloadObjectAsyncExpression).ReturnsAsync(stream);
+        _firebaseServiceMock.Setup(UploadObjectExpression).Callback((string _, Stream written) => uploaded = written);
+
+        var deleted = await _service.RemoveImage("apple", 1);
+
+        Assert.IsFalse(deleted);
+        _firebaseServiceMock.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
+        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploaded!)!;
+        CollectionAssert.AreEqual(new[] { "a", "c" }, imagesObject.images);
+        Assert.IsFalse(imagesObject.isVerify);
+        await uploaded.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RemoveImage_DeletesTheFileWhenItIsTheLastImage()
+    {
+        string? deletedPath = null;
+        var stream = new MemoryStream("""{ "images":["only"], "isVerify":false }"""u8.ToArray());
+        _firebaseServiceMock.Setup(DownloadObjectAsyncExpression).ReturnsAsync(stream);
+        _firebaseServiceMock.Setup(m => m.DeleteObject(IsAny<string>()))
+            .Callback((string path) => deletedPath = path)
+            .Returns(Task.CompletedTask);
+
+        var deleted = await _service.RemoveImage("apple", 0);
+
+        Assert.IsTrue(deleted);
+        Assert.AreEqual("ap/apple.json", deletedPath);
+        _firebaseServiceMock.Verify(UploadObjectExpression, Times.Never);
+    }
+
+    [TestMethod]
+    public async Task RemoveImage_LeavesOtherImagesWhenTheIndexIsMissing()
+    {
+        var stream = new MemoryStream("""{ "images":["a","b"], "isVerify":false }"""u8.ToArray());
+        _firebaseServiceMock.Setup(DownloadObjectAsyncExpression).ReturnsAsync(stream);
+
+        var deleted = await _service.RemoveImage("apple", 5);
+
+        Assert.IsFalse(deleted);
+        _firebaseServiceMock.Verify(UploadObjectExpression, Times.Never);
+        _firebaseServiceMock.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
+    }
     
     static readonly Expression<Action<IFirebaseService>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
     static readonly Expression<Func<IFirebaseService, ValueTask<Stream?>>> DownloadObjectAsyncExpression = 
