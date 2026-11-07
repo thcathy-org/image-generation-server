@@ -1,7 +1,9 @@
 using System.Threading.Channels;
 using ImageGenerationServer.Controllers;
 using ImageGenerationServer.DB;
+using ImageGenerationServer.Services;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 
 namespace ImageGenerationServer.UT.Controllers;
 
@@ -14,7 +16,7 @@ public class ImageControllerTest : TestBase
     public ImageControllerTest()
     {
         _channel = Channel.CreateUnbounded<string>();
-        _controller = new ImageController(_channel, new DataContext());
+        _controller = new ImageController(_channel, new DataContext(), new Mock<IVerifyService>().Object);
     }
 
     [TestMethod]

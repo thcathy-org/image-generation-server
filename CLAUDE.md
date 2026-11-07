@@ -64,7 +64,7 @@ ansible/                        # K8s deploy
      - `replicate` → **`ReplicateAiService.GenerateImageFromPrompt`**
    - Uploads JSON `{ images: [base64...], isVerify: false }` to Firebase
    - Does **not** insert `PendingVerifyPhrases`. New images are available without a pending-verify / Submit Verified step. Clients ignore `isVerify`; this service does not bulk-rewrite existing Firebase JSON to flip it.
-3. **Remove APIs** — `POST /verify/verified` with `removeImageIndex` drops only those indexes and leaves the other images. `POST /verify/remove` deletes the phrase file. `GET /verify/pending` and `GET /verify/total` remain but are not a show-gate. The angular admin keep/remove page is retired. This service has no report queue.
+3. **Remove APIs** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. Invalid phrase or index returns 4xx. `POST /verify/verified` with `removeImageIndex` and `POST /verify/remove` remain. `GET /verify/pending` and `GET /verify/total` remain but are not a show-gate. The angular admin keep/remove page is retired. This service has no report queue.
 
 Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFilePath`).
 
@@ -75,7 +75,7 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 | `ReplicateAiService` | LLM prompts + optional Replicate Flux image generation |
 | `LocalAiImageService` | LocalAI Flux image generation (default pixel provider) |
 | `FirebaseService` | Upload/download/delete JSON objects in GCS bucket |
-| `VerifyService` | Index-remove on `POST /verify/verified` — drops listed indexes, rewrites that one phrase file |
+| `VerifyService` | Index-remove. `POST /image/remove` rewrites one phrase file or deletes it when the index is the only image. `POST /verify/verified` still rewrites by `removeImageIndex` |
 | `ImageGenerationService` | Background queue processor. Uploads new images; does not enqueue pending verify |
 
 ### API endpoints
@@ -83,6 +83,7 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 | Method | Path | Purpose |
 |--------|------|---------|
 | POST | `/image/generate/{phrase}` | Enqueue phrase for generation |
+| POST | `/image/remove` | Drop `imageIndex`, or delete the phrase file when it is the only image |
 | GET | `/verify/total` | Count leftover pending-verify rows (not required for images to show) |
 | GET | `/verify/pending?max=20` | List leftover pending phrases (not a show-gate) |
 | POST | `/verify/verified` | Remove images by `removeImageIndex`; other images stay |

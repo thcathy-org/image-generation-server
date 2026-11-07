@@ -14,10 +14,10 @@ public class FirebaseServiceOptions
 public interface IFirebaseService
 {
     ValueTask<Object?> GetObject(string filename);
-    void UploadObject(string filename, Stream source);
+    bool UploadObject(string filename, Stream source);
     // ValueTask<Stream> DownloadObjectAsync(Object obj);
     ValueTask<Stream?> DownloadObjectAsync(string filename);
-    Task DeleteObject(string filename);
+    Task<bool> DeleteObject(string filename);
 }
 
 public class FirebaseService : IFirebaseService
@@ -53,17 +53,19 @@ public class FirebaseService : IFirebaseService
         return await DownloadObjectAsync(obj);
     }
 
-    public async Task DeleteObject(string filename)
+    public async Task<bool> DeleteObject(string filename)
     {
         var storage = StorageClientBuilder.Invoke();
         var objectName = GetObjectName(filename);
         try
         { 
             await storage.DeleteObjectAsync(_options.BucketName, objectName);
+            return true;
         }
         catch (Exception e)
         {
             Log.Warning($"Exception when delete object: {filename}", e);
+            return false;
         }
     }
 
@@ -76,7 +78,7 @@ public class FirebaseService : IFirebaseService
         return stream;
     }
 
-    public void UploadObject(string filename, Stream source)
+    public bool UploadObject(string filename, Stream source)
     {
         var storage = StorageClientBuilder.Invoke();
         var objectName = GetObjectName(filename);
@@ -84,9 +86,11 @@ public class FirebaseService : IFirebaseService
         {
             storage.UploadObject(_options.BucketName, objectName, null, source);
             Log.Information("{ObjectName} uploaded to {Bucket}", objectName, _options.BucketName);
+            return true;
         } catch (Exception e)
         {
             Log.Error(e, "Error when upload {ObjectName}", objectName);
+            return false;
         }
     }
     

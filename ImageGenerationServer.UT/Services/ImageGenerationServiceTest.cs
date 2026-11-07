@@ -161,6 +161,6 @@ public class ImageGenerationServiceTest : TestBase
 
     static readonly Expression<Action<IDataRepository>> AddOrUpdateExpression = m => m.AddOrUpdate(IsAny<PendingVerifyPhrase>());
     static readonly Expression<Func<IFirebaseService, ValueTask<Object?>>> GetObjectAsyncExpression = m => m.GetObject(IsAny<string>());
-    static readonly Expression<Action<IFirebaseService>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
+    static readonly Expression<Func<IFirebaseService, bool>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
     static readonly Expression<Func<IFirebaseService, ValueTask<Stream?>>> DownloadObjectAsyncExpression = m => m.DownloadObjectAsync(IsAny<string>());
 }

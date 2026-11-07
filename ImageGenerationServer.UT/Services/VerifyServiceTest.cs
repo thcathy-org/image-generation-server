@@ -96,7 +96,7 @@ public class VerifyServiceTest : TestBase
         await uploadedStreamCaptured!.DisposeAsync();
     }
     
-    static readonly Expression<Action<IFirebaseService>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
+    static readonly Expression<Func<IFirebaseService, bool>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
     static readonly Expression<Func<IFirebaseService, ValueTask<Stream?>>> DownloadObjectAsyncExpression = 
         m => m.DownloadObjectAsync(IsAny<string>());
 }
