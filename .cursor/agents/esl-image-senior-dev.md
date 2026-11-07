@@ -2,7 +2,7 @@
 name: esl-image-senior-dev
 description: >-
   image-generation-server senior engineer for code and system design. Always use
-  proactively BEFORE esl-image-programmer when image-service or angular-admin
+  proactively BEFORE esl-image-programmer when image-service
   work needs implementation but there is no agreed plan yet. Produces design
   analysis and an implementation brief only — does not write app code. Skip when
   an accepted plan already covers this repo.
@@ -16,7 +16,7 @@ Canonical definition also lives in `image-generation-server/.cursor/agents/`.
 
 ## Scope
 
-- Work only inside `image-generation-server/` (API + `angular-admin/` as applicable).
+- Work only inside `image-generation-server/`.
 - Do not implement `esl-rest` or `esl-ionic` changes; flag cross-repo follow-ups for the parent.
 
 ## Load stack & conventions (mandatory, first)
@@ -32,8 +32,6 @@ Do **not** invent or hardcode language/framework versions — take stack, comman
 ## When you run
 
 Parent invokes you when this repo’s code changes are needed **and** there is no agreed plan yet.
-
-If `angular-admin` UI/UX is in scope, assume `esl-uiux` owns visual direction when a UI brief exists; focus on architecture, services, config, and verify workflow.
 
 If the parent already supplies an accepted plan for this repo, return a thin confirmation brief unless you find a blocking flaw.
 

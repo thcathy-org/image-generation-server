@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## About
 
-ASP.NET Core 7 microservice for AI vocabulary image generation on [funfunspell.com](https://www.funfunspell.com). Prompts via Replicate LLM; pixels via LocalAI Flux (default) or Replicate Flux; storage in Google Firebase. SQLite tracks phrases pending human verification.
+ASP.NET Core 7 microservice for AI vocabulary image generation on [funfunspell.com](https://www.funfunspell.com). Prompts via Replicate LLM; pixels via LocalAI Flux (default) or Replicate Flux; storage in Google Firebase.
 
 ## Commands
 
@@ -15,9 +15,6 @@ dotnet test ImageGenerationServer.UT/ImageGenerationServer.UT.csproj
 
 # Run API (from repo root)
 dotnet run --project ImageGenerationServer/ImageGenerationServer.csproj
-
-# Admin UI
-cd angular-admin && npm install && npm start   # http://localhost:4200
 ```
 
 Tests use MSTest + Moq + MockHttp in `ImageGenerationServer.UT/`.
@@ -44,12 +41,10 @@ Agent entry point: [AGENTS.md](./AGENTS.md).
 
 ```
 ImageGenerationServer/          # ASP.NET Core API + background worker
-  Controllers/                  # ImageController, VerifyController
-  Services/                     # Generation, Replicate, LocalAI, Firebase, Verify
-  DB/                           # EF Core + SQLite (pending verify phrases)
+  Controllers/                  # ImageController
+  Services/                     # Generation, Replicate, LocalAI, Firebase, image remove
   Middleware/                   # ApiKeyMiddleware
 ImageGenerationServer.UT/       # Unit tests
-angular-admin/                  # Angular 16 admin UI for verify workflow
 ansible/                        # K8s deploy
 ```
 
@@ -57,14 +52,13 @@ ansible/                        # K8s deploy
 
 1. **`POST /image/generate/{phrase}`** — `ImageController` enqueues phrase on an unbounded `Channel<string>`.
 2. **`ImageGenerationService`** (hosted `BackgroundService`) reads the channel:
-   - Skips if Firebase object already exists at `{folder}/{slug}.json`
+   - Skips if Firebase object already exists at `{folder}/{slug}.json` (does not rewrite it)
    - Calls **`ReplicateAiService.GenerateImagePrompts(phrase)`** — always Replicate LLM (`openai/gpt-5-mini`); returns exactly 3 prompts
    - For each prompt, generates image via provider selected by **`ImageGenerationServiceOptions.ImageProvider`**:
      - `localai` (default) → **`LocalAiImageService`** → LocalAI `flux.2-klein-4b`
      - `replicate` → **`ReplicateAiService.GenerateImageFromPrompt`**
-   - Uploads JSON `{ images: [base64...], isVerify: false }` to Firebase
-   - Adds phrase to SQLite **`PendingVerifyPhrases`** if not yet verified
-3. **Verify workflow** — admin UI calls `VerifyController`; **`VerifyService`** marks chosen image verified and updates Firebase.
+   - Uploads JSON `{ images: [base64...] }` to Firebase. New images are available without a review step. This service does not read or write `isVerify`, and it does not bulk-rewrite existing Firebase files to strip that old field.
+3. **Remove** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. A blank phrase or negative index returns 400. A missing file, missing index, or unreadable JSON returns 404. A Firebase failure returns 500. There is no database and no admin UI.
 
 Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFilePath`).
 
@@ -75,21 +69,18 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 | `ReplicateAiService` | LLM prompts + optional Replicate Flux image generation |
 | `LocalAiImageService` | LocalAI Flux image generation (default pixel provider) |
 | `FirebaseService` | Upload/download/delete JSON objects in GCS bucket |
-| `VerifyService` | Human verification — selects winning image, sets `isVerify: true` |
-| `ImageGenerationService` | Background queue processor |
+| `ImageRemovalService` | `POST /image/remove` drops one image, or deletes the phrase file when that index is the only image |
+| `ImageGenerationService` | Background queue processor. Uploads new images |
 
 ### API endpoints
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | POST | `/image/generate/{phrase}` | Enqueue phrase for generation |
-| GET | `/verify/total` | Count pending verify phrases |
-| GET | `/verify/pending?max=20` | List pending phrases |
-| POST | `/verify/verified` | Submit verified phrase selections |
-| POST | `/verify/remove` | Delete phrase from Firebase + DB |
-| GET | `/healthz` | Health check (includes SQLite) |
+| POST | `/image/remove` | Drop `imageIndex`, or delete the phrase file when it is the only image |
+| GET | `/healthz` | Health check |
 
-All routes except `/healthz` require **`X-API-KEY`** header (see `ApiKeyMiddleware`).
+`/image/*` requires the **`X-API-KEY`** header (see `ApiKeyMiddleware`). `/healthz` does not.
 
 ### Configuration (`appsettings.json`)
 
@@ -100,7 +91,6 @@ All routes except `/healthz` require **`X-API-KEY`** header (see `ApiKeyMiddlewa
 | `LocalAiImageServiceOptions` | `BaseUrl`, `ApiKey`, `ImageModel`, `Size`, `RequestTimeoutSeconds` |
 | `FirebaseServiceOptions` | `BucketName`, `FirebaseBaseFolder` |
 | `ApiKeyMiddlewareOptions` | `ApiKeys`, `ApiKeyHeaderName` |
-| `ConnectionStrings:LocalDatabase` | SQLite path for pending verify DB |
 
 Environment overrides use `__` separator (e.g. `ReplicateAiServiceOptions__Token`).
 
@@ -128,7 +118,6 @@ Do not change prompt model without eval and updating the decision doc.
 
 - Docker + Kubernetes via `ansible/`
 - GitHub Actions: `.github/workflows/build-deploy.yml`
-- CORS allows `localhost:4200` and `localhost:44351` for admin UI dev
 
 ### Testing patterns
 

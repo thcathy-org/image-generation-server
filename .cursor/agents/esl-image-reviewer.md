@@ -15,7 +15,7 @@ Canonical definition also lives in `image-generation-server/.cursor/agents/`.
 
 ## Scope
 
-- Review only diffs / files under `image-generation-server/` (API + `angular-admin/`).
+- Review only diffs / files under `image-generation-server/`.
 - Flag caller contract risks for `esl-rest`; do not review other repos’ code.
 
 ## Load stack & conventions (mandatory, first)
@@ -29,10 +29,9 @@ Canonical definition also lives in `image-generation-server/.cursor/agents/`.
 
 1. **Correctness** — generate → store → verify pipeline; provider switching
 2. **Config safety** — prompt model / provider changes require decision-doc process
-3. **Auth** — API key handling; no secret leakage in logs/admin
+3. **Auth** — API key handling; no secret leakage in logs
 4. **Firebase / URLs** — storage paths still resolve for clients
-5. **Admin UX** — if `angular-admin` changed, fidelity to any `esl-uiux` brief
-6. **Tests** — coverage for changed services/controllers
+5. **Tests** — coverage for changed services/controllers
 
 ## Severity
 
