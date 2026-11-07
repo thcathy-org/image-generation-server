@@ -58,11 +58,13 @@ public class ImageGenerationServiceTest : TestBase
         _localAiImageServiceMock.Verify(m => m.GenerateBase64ImageAsync(IsAny<string>()), Times.Exactly(3));
         _replicateAiServiceMock.Verify(m => m.GenerateImageFromPrompt(IsAny<string>()), Times.Never);
 
-        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
+        uploadedStream!.Position = 0;
+        var json = await new StreamReader(uploadedStream).ReadToEndAsync();
+        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(json)!;
         Assert.AreEqual(3, imagesObject.images.Length);
         Assert.AreEqual("localai:prompt one", imagesObject.images[0]);
-        Assert.AreEqual(false, imagesObject.isVerify);
-        await uploadedStream!.DisposeAsync();
+        Assert.IsFalse(json.Contains("isVerify"));
+        await uploadedStream.DisposeAsync();
     }
 
     [TestMethod]
@@ -130,16 +132,10 @@ public class ImageGenerationServiceTest : TestBase
         Assert.AreEqual("do/download-an-image.json", "download-an-image".GetImageFilePath());
     }
 
-    [DataTestMethod]
-    [DataRow(false)]
-    [DataRow(true)]
-    public async Task ExecuteAsync_ExistingFile_DoesNotRewriteFirebase(bool isPhraseVerify)
+    [TestMethod]
+    public async Task ExecuteAsync_ExistingFile_DoesNotRewriteFirebase()
     {
-        var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
-        {
-            images = new[] { "kept" },
-            isVerify = isPhraseVerify
-        })));
+        var stream = new MemoryStream("""{ "images":["kept"], "isVerify":false }"""u8.ToArray());
         _firebaseServiceMock.Setup(DownloadObjectAsyncExpression).ReturnsAsync(stream);
 
         await _service.StartAsync(CancellationToken.None);

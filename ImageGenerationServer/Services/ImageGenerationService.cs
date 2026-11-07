@@ -15,7 +15,6 @@ public class ImageGenerationServiceOptions
 public class ImagesObject
 {
     public string[] images { get; set; } = Array.Empty<string>();
-    public bool isVerify { get; set; }
 }
 
 public partial class ImageGenerationService : BackgroundService
@@ -64,8 +63,7 @@ public partial class ImageGenerationService : BackgroundService
 
             var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
             {
-                images = base64Images.ToArray(),
-                isVerify = false
+                images = base64Images.ToArray()
             }))); 
             _firebaseService.UploadObject(filePath, stream);
             Log.Information("Complete process [{Phrase}]", phrase);

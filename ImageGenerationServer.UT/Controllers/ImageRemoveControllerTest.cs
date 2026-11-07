@@ -37,9 +37,11 @@ public class ImageRemoveControllerTest : TestBase
 
         Assert.AreEqual(200, Status(result));
         Assert.AreEqual("th/the-cat.json", uploadedPath);
-        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploaded!)!;
+        uploaded!.Position = 0;
+        var json = await new StreamReader(uploaded).ReadToEndAsync();
+        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(json)!;
         CollectionAssert.AreEqual(new[] { "keep-0", "keep-2" }, imagesObject.images);
-        Assert.AreEqual(true, imagesObject.isVerify);
+        Assert.IsFalse(json.Contains("isVerify"));
         firebase.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
         await uploaded!.DisposeAsync();
     }

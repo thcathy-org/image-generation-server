@@ -88,7 +88,6 @@ public class VerifyService : IVerifyService
     private bool RewriteWithoutIndexes(string imageFilePath, ImagesObject imagesObject, IReadOnlyCollection<int> removeImageIndex)
     {
         imagesObject.images = imagesObject.images.Where((_, index) => !removeImageIndex.Contains(index)).ToArray();
-        imagesObject.isVerify = true;
 
         var newStream = new MemoryStream(Encoding.ASCII.GetBytes(
             JsonSerializer.Serialize(imagesObject)));
