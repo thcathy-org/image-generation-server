@@ -6,7 +6,6 @@ namespace ImageGenerationServer.Services;
 
 public interface IVerifyService
 {
-    Task<bool> Verify(VerifiedPhrase phrase);
     Task<ImageRemoveOutcome> RemoveImageAsync(string phrase, int imageIndex);
 }
 
@@ -27,23 +26,6 @@ public class VerifyService : IVerifyService
     public VerifyService(IFirebaseService firebaseService)
     {
         _firebaseService = firebaseService;
-    }
-
-    public async Task<bool> Verify(VerifiedPhrase phrase)
-    {
-        if (string.IsNullOrWhiteSpace(phrase.Phrase))
-            return false;
-
-        var imageFilePath = phrase.Phrase.GetImageFilePath();
-        var stream = await _firebaseService.DownloadObjectAsync(imageFilePath);
-        if (stream == null)
-            return false;
-
-        var imagesObject = JsonSerializer.Deserialize<ImagesObject>(stream);
-        if (imagesObject?.images == null)
-            return false;
-
-        return RewriteWithoutIndexes(imageFilePath, imagesObject, phrase.RemoveImageIndex);
     }
 
     public async Task<ImageRemoveOutcome> RemoveImageAsync(string phrase, int imageIndex)
@@ -112,9 +94,4 @@ public class VerifyService : IVerifyService
             JsonSerializer.Serialize(imagesObject)));
         return _firebaseService.UploadObject(imageFilePath, newStream);
     }
-}
-
-public class VerifiedPhrase {
-    public string Phrase { get; set; } = "";
-    public List<int> RemoveImageIndex { get; set; } = new();
 }

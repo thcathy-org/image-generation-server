@@ -2,7 +2,7 @@
 
 ## Scope
 
-ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.com](https://www.funfunspell.com). Accepts phrase generation requests and writes images to Firebase Storage. New images are available without a review step. `POST /image/remove` drops one image by index, or deletes the phrase file when that index is the only image. `POST /verify/verified` and `POST /verify/remove` do the same Firebase operations. There is no admin UI and no database.
+ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.com](https://www.funfunspell.com). Accepts phrase generation requests and writes images to Firebase Storage. New images are available without a review step. `POST /image/remove` drops one image by index, or deletes the phrase file when that index is the only image. There is no admin UI and no database.
 
 ## Commands
 

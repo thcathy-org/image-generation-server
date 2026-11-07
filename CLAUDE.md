@@ -41,7 +41,7 @@ Agent entry point: [AGENTS.md](./AGENTS.md).
 
 ```
 ImageGenerationServer/          # ASP.NET Core API + background worker
-  Controllers/                  # ImageController, VerifyController
+  Controllers/                  # ImageController
   Services/                     # Generation, Replicate, LocalAI, Firebase, image remove
   Middleware/                   # ApiKeyMiddleware
 ImageGenerationServer.UT/       # Unit tests
@@ -58,7 +58,7 @@ ansible/                        # K8s deploy
      - `localai` (default) → **`LocalAiImageService`** → LocalAI `flux.2-klein-4b`
      - `replicate` → **`ReplicateAiService.GenerateImageFromPrompt`**
    - Uploads JSON `{ images: [base64...], isVerify: false }` to Firebase. New images are available without a review step. This service does not bulk-rewrite existing Firebase JSON to flip `isVerify`.
-3. **Remove** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. Invalid phrase or index returns 4xx. `POST /verify/verified` and `POST /verify/remove` remain as the same Firebase operations. There is no database and no admin UI.
+3. **Remove** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. Invalid phrase or index returns 4xx. There is no database and no admin UI.
 
 Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFilePath`).
 
@@ -69,7 +69,7 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 | `ReplicateAiService` | LLM prompts + optional Replicate Flux image generation |
 | `LocalAiImageService` | LocalAI Flux image generation (default pixel provider) |
 | `FirebaseService` | Upload/download/delete JSON objects in GCS bucket |
-| `VerifyService` | `POST /image/remove` rewrites one phrase file or deletes it when the index is the only image. `POST /verify/verified` rewrites by `removeImageIndex` |
+| `VerifyService` | `POST /image/remove` rewrites one phrase file or deletes it when the index is the only image |
 | `ImageGenerationService` | Background queue processor. Uploads new images |
 
 ### API endpoints
@@ -78,11 +78,9 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 |--------|------|---------|
 | POST | `/image/generate/{phrase}` | Enqueue phrase for generation |
 | POST | `/image/remove` | Drop `imageIndex`, or delete the phrase file when it is the only image |
-| POST | `/verify/verified` | Remove images by `removeImageIndex`; other images stay |
-| POST | `/verify/remove` | Delete the phrase file from Firebase |
 | GET | `/healthz` | Health check |
 
-All routes except `/healthz` require **`X-API-KEY`** header (see `ApiKeyMiddleware`).
+`/image/*` requires the **`X-API-KEY`** header (see `ApiKeyMiddleware`). `/healthz` does not.
 
 ### Configuration (`appsettings.json`)
 
