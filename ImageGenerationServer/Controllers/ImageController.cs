@@ -36,15 +36,12 @@ public class ImageController : ControllerBase
 
         try
         {
-            var outcome = await _verifyService.RemoveImageAsync(request.Phrase, request.ImageIndex.Value);
-            return outcome switch
+            var result = await _verifyService.RemoveImageAsync(request.Phrase, request.ImageIndex.Value);
+            return result switch
             {
-                ImageRemoveOutcome.Updated => Ok(),
-                ImageRemoveOutcome.Deleted => Ok(),
-                ImageRemoveOutcome.NotFound => NotFound("phrase was not found."),
-                ImageRemoveOutcome.InvalidIndex => BadRequest("imageIndex is invalid."),
-                ImageRemoveOutcome.InvalidFile => BadRequest("phrase file is not valid image JSON."),
-                ImageRemoveOutcome.Failed => StatusCode(StatusCodes.Status500InternalServerError),
+                ImageRemoveResult.Succeeded => Ok(),
+                ImageRemoveResult.NotFound => NotFound("image was not found."),
+                ImageRemoveResult.Failed => StatusCode(StatusCodes.Status500InternalServerError),
                 _ => StatusCode(StatusCodes.Status500InternalServerError)
             };
         }

@@ -6,16 +6,13 @@ namespace ImageGenerationServer.Services;
 
 public interface IVerifyService
 {
-    Task<ImageRemoveOutcome> RemoveImageAsync(string phrase, int imageIndex);
+    Task<ImageRemoveResult> RemoveImageAsync(string phrase, int imageIndex);
 }
 
-public enum ImageRemoveOutcome
+public enum ImageRemoveResult
 {
-    Updated,
-    Deleted,
+    Succeeded,
     NotFound,
-    InvalidIndex,
-    InvalidFile,
     Failed
 }
 
@@ -28,17 +25,17 @@ public class VerifyService : IVerifyService
         _firebaseService = firebaseService;
     }
 
-    public async Task<ImageRemoveOutcome> RemoveImageAsync(string phrase, int imageIndex)
+    public async Task<ImageRemoveResult> RemoveImageAsync(string phrase, int imageIndex)
     {
         if (imageIndex < 0)
-            return ImageRemoveOutcome.InvalidIndex;
+            return ImageRemoveResult.NotFound;
 
         var imageFilePath = phrase.GetImageFilePath();
         var stream = await _firebaseService.DownloadObjectAsync(imageFilePath);
         if (stream == null)
         {
             Log.Information("Phrase file not found at {Path}", imageFilePath);
-            return ImageRemoveOutcome.NotFound;
+            return ImageRemoveResult.NotFound;
         }
 
         ImagesObject? imagesObject;
@@ -49,16 +46,13 @@ public class VerifyService : IVerifyService
         catch (JsonException ex)
         {
             Log.Warning(ex, "Phrase file is not valid image JSON at {Path}", imageFilePath);
-            return ImageRemoveOutcome.InvalidFile;
+            return ImageRemoveResult.NotFound;
         }
 
-        if (imagesObject?.images == null)
-            return ImageRemoveOutcome.InvalidFile;
-
-        if (imageIndex >= imagesObject.images.Length)
+        if (imagesObject?.images == null || imageIndex >= imagesObject.images.Length)
         {
-            Log.Information("Image index {Index} is outside {Count} images for {Path}", imageIndex, imagesObject.images.Length, imageFilePath);
-            return ImageRemoveOutcome.InvalidIndex;
+            Log.Information("Image index {Index} was not found at {Path}", imageIndex, imageFilePath);
+            return ImageRemoveResult.NotFound;
         }
 
         if (imagesObject.images.Length == 1)
@@ -67,22 +61,22 @@ public class VerifyService : IVerifyService
             if (!deleted)
             {
                 Log.Error("Failed to delete phrase file {Path}", imageFilePath);
-                return ImageRemoveOutcome.Failed;
+                return ImageRemoveResult.Failed;
             }
 
             Log.Information("Deleted phrase file {Path}", imageFilePath);
-            return ImageRemoveOutcome.Deleted;
+            return ImageRemoveResult.Succeeded;
         }
 
         var uploaded = RewriteWithoutIndexes(imageFilePath, imagesObject, new[] { imageIndex });
         if (!uploaded)
         {
             Log.Error("Failed to rewrite phrase file {Path} without index {Index}", imageFilePath, imageIndex);
-            return ImageRemoveOutcome.Failed;
+            return ImageRemoveResult.Failed;
         }
 
         Log.Information("Removed image {Index} from {Path}", imageIndex, imageFilePath);
-        return ImageRemoveOutcome.Updated;
+        return ImageRemoveResult.Succeeded;
     }
 
     private bool RewriteWithoutIndexes(string imageFilePath, ImagesObject imagesObject, IReadOnlyCollection<int> removeImageIndex)

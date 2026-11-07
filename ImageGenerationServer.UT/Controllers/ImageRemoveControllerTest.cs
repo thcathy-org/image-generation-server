@@ -154,7 +154,7 @@ public class ImageRemoveControllerTest : TestBase
             ImageIndex = 1
         });
 
-        Assert.AreEqual((int)HttpStatusCode.BadRequest, Status(result));
+        Assert.AreEqual((int)HttpStatusCode.NotFound, Status(result));
         firebase.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
         firebase.Verify(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()), Times.Never);
     }
@@ -192,7 +192,7 @@ public class ImageRemoveControllerTest : TestBase
     }
 
     [TestMethod]
-    public async Task Remove_WhenPhraseFileIsNotJson_Returns400()
+    public async Task Remove_WhenPhraseFileIsNotJson_Returns404()
     {
         var firebase = new Mock<IFirebaseService>();
         firebase.Setup(m => m.DownloadObjectAsync(IsAny<string>()))
@@ -204,7 +204,7 @@ public class ImageRemoveControllerTest : TestBase
             ImageIndex = 0
         });
 
-        Assert.AreEqual((int)HttpStatusCode.BadRequest, Status(result));
+        Assert.AreEqual((int)HttpStatusCode.NotFound, Status(result));
         firebase.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
         firebase.Verify(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()), Times.Never);
     }
