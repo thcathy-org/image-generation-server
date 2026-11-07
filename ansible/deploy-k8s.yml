@@ -65,23 +65,6 @@
       retries: 10
       delay: 30
 
-    - name: remove retired admin site and pending-verify volume
-      k8s:
-        kubeconfig: "{{ kubeconfig }}"
-        state: absent
-        namespace: "{{ namespace }}"
-        api_version: "{{ item.api_version }}"
-        kind: "{{ item.kind }}"
-        name: "{{ item.name }}"
-        wait: true
-      loop:
-        - { api_version: apps/v1, kind: Deployment, name: angular-admin }
-        - { api_version: v1, kind: Service, name: angular-admin-service }
-        - { api_version: networking.k8s.io/v1, kind: Ingress, name: angular-admin-ingress }
-        - { api_version: traefik.io/v1alpha1, kind: Middleware, name: angular-admin-prefix-remover }
-        - { api_version: v1, kind: Secret, name: angular-admin-tls }
-        - { api_version: v1, kind: PersistentVolumeClaim, name: "{{ app_name }}-pvc" }
-
     - name: verify server is started
       tags: verify
       include_tasks: tasks/verify_server_started.yml
