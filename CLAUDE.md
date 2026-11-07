@@ -58,7 +58,7 @@ ansible/                        # K8s deploy
      - `localai` (default) → **`LocalAiImageService`** → LocalAI `flux.2-klein-4b`
      - `replicate` → **`ReplicateAiService.GenerateImageFromPrompt`**
    - Uploads JSON `{ images: [base64...] }` to Firebase. New images are available without a review step. This service does not read or write `isVerify`, and it does not bulk-rewrite existing Firebase files to strip that old field.
-3. **Remove** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. Invalid phrase or index returns 4xx. There is no database and no admin UI.
+3. **Remove** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. A blank phrase or negative index returns 400. A missing file, missing index, or unreadable JSON returns 404. A Firebase failure returns 500. There is no database and no admin UI.
 
 Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFilePath`).
 
@@ -69,7 +69,7 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 | `ReplicateAiService` | LLM prompts + optional Replicate Flux image generation |
 | `LocalAiImageService` | LocalAI Flux image generation (default pixel provider) |
 | `FirebaseService` | Upload/download/delete JSON objects in GCS bucket |
-| `VerifyService` | `POST /image/remove` rewrites one phrase file or deletes it when the index is the only image |
+| `ImageRemovalService` | `POST /image/remove` drops one image, or deletes the phrase file when that index is the only image |
 | `ImageGenerationService` | Background queue processor. Uploads new images |
 
 ### API endpoints

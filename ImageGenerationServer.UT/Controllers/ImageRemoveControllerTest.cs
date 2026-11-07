@@ -17,7 +17,7 @@ public class ImageRemoveControllerTest : TestBase
     public async Task Remove_WhenOtherImagesRemain_RewritesFileWithoutThatIndex()
     {
         var firebase = new Mock<IFirebaseService>();
-        Stream? uploaded = null;
+        byte[]? uploaded = null;
         string? uploadedPath = null;
         firebase.Setup(m => m.DownloadObjectAsync("th/the-cat.json"))
             .ReturnsAsync(JsonStream("""{ "images":["keep-0","drop-1","keep-2"], "isVerify":false }"""));
@@ -25,7 +25,7 @@ public class ImageRemoveControllerTest : TestBase
             .Callback((string path, Stream body) =>
             {
                 uploadedPath = path;
-                uploaded = body;
+                uploaded = ReadAll(body);
             })
             .Returns(true);
 
@@ -37,24 +37,22 @@ public class ImageRemoveControllerTest : TestBase
 
         Assert.AreEqual(200, Status(result));
         Assert.AreEqual("th/the-cat.json", uploadedPath);
-        uploaded!.Position = 0;
-        var json = await new StreamReader(uploaded).ReadToEndAsync();
+        var json = Encoding.UTF8.GetString(uploaded!);
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(json)!;
         CollectionAssert.AreEqual(new[] { "keep-0", "keep-2" }, imagesObject.images);
         Assert.IsFalse(json.Contains("isVerify"));
         firebase.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
-        await uploaded!.DisposeAsync();
     }
 
     [TestMethod]
     public async Task Remove_WhenOneImageWouldRemain_RewritesInsteadOfDeleting()
     {
         var firebase = new Mock<IFirebaseService>();
-        Stream? uploaded = null;
+        byte[]? uploaded = null;
         firebase.Setup(m => m.DownloadObjectAsync("ca/cat.json"))
             .ReturnsAsync(JsonStream("""{ "images":["drop","stay"], "isVerify":false }"""));
         firebase.Setup(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()))
-            .Callback((string _, Stream body) => uploaded = body)
+            .Callback((string _, Stream body) => uploaded = ReadAll(body))
             .Returns(true);
 
         var result = await Controller(firebase).Remove(new RemoveImageRequest
@@ -67,7 +65,6 @@ public class ImageRemoveControllerTest : TestBase
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploaded!)!;
         CollectionAssert.AreEqual(new[] { "stay" }, imagesObject.images);
         firebase.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
-        await uploaded!.DisposeAsync();
     }
 
     [TestMethod]
@@ -213,10 +210,18 @@ public class ImageRemoveControllerTest : TestBase
     {
         return new ImageController(
             Channel.CreateUnbounded<string>(),
-            new VerifyService(firebase.Object));
+            new ImageRemovalService(firebase.Object));
     }
 
     private static MemoryStream JsonStream(string json) => new(Encoding.UTF8.GetBytes(json));
+
+    private static byte[] ReadAll(Stream body)
+    {
+        body.Position = 0;
+        using var copy = new MemoryStream();
+        body.CopyTo(copy);
+        return copy.ToArray();
+    }
 
     private static int Status(IActionResult result)
     {

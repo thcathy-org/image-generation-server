@@ -10,12 +10,12 @@ namespace ImageGenerationServer.Controllers;
 public class ImageController : ControllerBase
 {
     private readonly ChannelWriter<string> _channelWriter;
-    private readonly IVerifyService _verifyService;
+    private readonly IImageRemovalService _imageRemovalService;
 
-    public ImageController(Channel<string> channel, IVerifyService verifyService)
+    public ImageController(Channel<string> channel, IImageRemovalService imageRemovalService)
     {
         _channelWriter = channel.Writer;
-        _verifyService = verifyService;
+        _imageRemovalService = imageRemovalService;
     }
 
     [HttpPost("generate/{phrase}")]
@@ -36,7 +36,7 @@ public class ImageController : ControllerBase
 
         try
         {
-            var result = await _verifyService.RemoveImageAsync(request.Phrase, request.ImageIndex.Value);
+            var result = await _imageRemovalService.RemoveImageAsync(request.Phrase, request.ImageIndex.Value);
             return result switch
             {
                 ImageRemoveResult.Succeeded => Ok(),

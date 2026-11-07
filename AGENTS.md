@@ -52,4 +52,4 @@ Committed rules: [`.cursor/rules/`](./.cursor/rules/). Workspace-level `esl-all/
 
 ## Deep context
 
-See [CLAUDE.md](./CLAUDE.md) for pipeline architecture, services, config, and verify workflow.
+See [CLAUDE.md](./CLAUDE.md) for pipeline architecture, services, and config.

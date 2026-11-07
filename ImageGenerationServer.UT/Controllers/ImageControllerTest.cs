@@ -15,7 +15,7 @@ public class ImageControllerTest : TestBase
     public ImageControllerTest()
     {
         _channel = Channel.CreateUnbounded<string>();
-        _controller = new ImageController(_channel, new Mock<IVerifyService>().Object);
+        _controller = new ImageController(_channel, new Mock<IImageRemovalService>().Object);
     }
 
     [TestMethod]

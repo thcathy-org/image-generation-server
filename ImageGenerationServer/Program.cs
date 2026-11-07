@@ -18,7 +18,7 @@ builder.Services.AddSingleton(Channel.CreateUnbounded<string>());
 builder.Services.AddSingleton<IFirebaseService, FirebaseService>();
 builder.Services.AddSingleton<IReplicateAiService, ReplicateAiService>();
 builder.Services.AddSingleton<ILocalAiImageService, LocalAiImageService>();
-builder.Services.AddSingleton<IVerifyService, VerifyService>();
+builder.Services.AddSingleton<IImageRemovalService, ImageRemovalService>();
 builder.Services.AddHostedService<ImageGenerationService>();
 
 builder.Services.AddControllers();
