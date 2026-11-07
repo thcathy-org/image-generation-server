@@ -68,10 +68,10 @@ public class VerifyService : IVerifyService
             return ImageRemoveResult.Succeeded;
         }
 
-        var uploaded = RewriteWithoutIndexes(imageFilePath, imagesObject, new[] { imageIndex });
+        var uploaded = RemoveImage(imageFilePath, imagesObject, imageIndex);
         if (!uploaded)
         {
-            Log.Error("Failed to rewrite phrase file {Path} without index {Index}", imageFilePath, imageIndex);
+            Log.Error("Failed to remove image {Index} from {Path}", imageIndex, imageFilePath);
             return ImageRemoveResult.Failed;
         }
 
@@ -79,9 +79,9 @@ public class VerifyService : IVerifyService
         return ImageRemoveResult.Succeeded;
     }
 
-    private bool RewriteWithoutIndexes(string imageFilePath, ImagesObject imagesObject, IReadOnlyCollection<int> removeImageIndex)
+    private bool RemoveImage(string imageFilePath, ImagesObject imagesObject, int imageIndex)
     {
-        imagesObject.images = imagesObject.images.Where((_, index) => !removeImageIndex.Contains(index)).ToArray();
+        imagesObject.images = imagesObject.images.Where((_, index) => index != imageIndex).ToArray();
 
         var newStream = new MemoryStream(Encoding.ASCII.GetBytes(
             JsonSerializer.Serialize(imagesObject)));
