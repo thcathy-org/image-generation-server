@@ -2,14 +2,11 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
-using ImageGenerationServer.DB;
-using ImageGenerationServer.DTO;
 using ImageGenerationServer.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
 using static Moq.It;
-using Object = Google.Apis.Storage.v1.Data.Object;
 
 namespace ImageGenerationServer.UT.Services;
 
@@ -22,7 +19,6 @@ public class ImageGenerationServiceTest : TestBase
     private Mock<IFirebaseService> _firebaseServiceMock = new();
     private Mock<IReplicateAiService> _replicateAiServiceMock = new();
     private Mock<ILocalAiImageService> _localAiImageServiceMock = new();
-    private Mock<IDataRepository> _repoMock = new();
 
     private ImageGenerationService CreateService(string imageProvider)
     {
@@ -33,7 +29,6 @@ public class ImageGenerationServiceTest : TestBase
         services.AddSingleton(Options.Create(new ImageGenerationServiceOptions { ImageProvider = imageProvider }));
         services.AddSingleton(_channel);
         services.AddSingleton<ImageGenerationService>();
-        services.AddScoped<IDataRepository>(r => _repoMock.Object);
 
         return services.BuildServiceProvider().GetRequiredService<ImageGenerationService>();
     }
@@ -67,7 +62,6 @@ public class ImageGenerationServiceTest : TestBase
         Assert.AreEqual(3, imagesObject.images.Length);
         Assert.AreEqual("localai:prompt one", imagesObject.images[0]);
         Assert.AreEqual(false, imagesObject.isVerify);
-        _repoMock.Verify(AddOrUpdateExpression, Times.Never);
         await uploadedStream!.DisposeAsync();
     }
 
@@ -93,7 +87,6 @@ public class ImageGenerationServiceTest : TestBase
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(uploadedStream!)!;
         Assert.AreEqual(3, imagesObject.images.Length);
         Assert.AreEqual("replicate:prompt one", imagesObject.images[0]);
-        _repoMock.Verify(AddOrUpdateExpression, Times.Never);
         await uploadedStream!.DisposeAsync();
     }
 
@@ -140,7 +133,7 @@ public class ImageGenerationServiceTest : TestBase
     [DataTestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public async Task ExecuteAsync_ExistingFile_DoesNotQueuePendingOrRewriteFirebase(bool isPhraseVerify)
+    public async Task ExecuteAsync_ExistingFile_DoesNotRewriteFirebase(bool isPhraseVerify)
     {
         var stream = new MemoryStream(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new ImagesObject
         {
@@ -154,13 +147,10 @@ public class ImageGenerationServiceTest : TestBase
         await Task.Delay(100);
         await _service.StopAsync(CancellationToken.None);
 
-        _repoMock.Verify(AddOrUpdateExpression, Times.Never);
         _firebaseServiceMock.Verify(UploadObjectExpression, Times.Never);
         _replicateAiServiceMock.Verify(m => m.GenerateImagePrompts(IsAny<string>()), Times.Never);
     }
 
-    static readonly Expression<Action<IDataRepository>> AddOrUpdateExpression = m => m.AddOrUpdate(IsAny<PendingVerifyPhrase>());
-    static readonly Expression<Func<IFirebaseService, ValueTask<Object?>>> GetObjectAsyncExpression = m => m.GetObject(IsAny<string>());
     static readonly Expression<Func<IFirebaseService, bool>> UploadObjectExpression = m => m.UploadObject(IsAny<string>(), IsAny<Stream>());
     static readonly Expression<Func<IFirebaseService, ValueTask<Stream?>>> DownloadObjectAsyncExpression = m => m.DownloadObjectAsync(IsAny<string>());
 }

@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using ImageGenerationServer.Controllers;
-using ImageGenerationServer.DB;
 using ImageGenerationServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -212,7 +211,6 @@ public class ImageRemoveControllerTest : TestBase
     {
         return new ImageController(
             Channel.CreateUnbounded<string>(),
-            new DataContext(),
             new VerifyService(firebase.Object));
     }
 

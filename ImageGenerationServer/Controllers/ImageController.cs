@@ -1,5 +1,4 @@
 using System.Threading.Channels;
-using ImageGenerationServer.DB;
 using ImageGenerationServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
@@ -10,13 +9,11 @@ namespace ImageGenerationServer.Controllers;
 [Route("image")]
 public class ImageController : ControllerBase
 {
-    private readonly DataContext _context;
     private readonly ChannelWriter<string> _channelWriter;
     private readonly IVerifyService _verifyService;
-    
-    public ImageController(Channel<string> channel, DataContext context, IVerifyService verifyService)
+
+    public ImageController(Channel<string> channel, IVerifyService verifyService)
     {
-        _context = context;
         _channelWriter = channel.Writer;
         _verifyService = verifyService;
     }

@@ -1,8 +1,7 @@
+using System.Net;
 using ImageGenerationServer.Controllers;
-using ImageGenerationServer.DB;
-using ImageGenerationServer.DTO;
 using ImageGenerationServer.Services;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 using static Moq.It;
 
@@ -12,30 +11,42 @@ namespace ImageGenerationServer.UT.Controllers;
 public class VerifyControllerTest : TestBase
 {
     [TestMethod]
-    public void Remove_DeletesPhraseFileWhenPhraseIsNotPending()
+    public async Task Remove_DeletesPhraseFile()
     {
-        using var context = CreateContext();
         var firebase = new Mock<IFirebaseService>();
-        var verify = new Mock<IVerifyService>();
-        var controller = new VerifyController(context, verify.Object, firebase.Object);
+        firebase.Setup(m => m.DeleteObject("ca/cat.json")).ReturnsAsync(true);
+        var controller = new VerifyController(new Mock<IVerifyService>().Object, firebase.Object);
 
-        controller.Remove(new PendingVerifyPhrase("cat"));
+        var result = await controller.Remove(new PhraseRequest { Phrase = "cat" });
 
+        Assert.AreEqual(200, Status(result));
         firebase.Verify(m => m.DeleteObject("ca/cat.json"), Times.Once);
         firebase.Verify(m => m.UploadObject(IsAny<string>(), IsAny<Stream>()), Times.Never);
-        verify.Verify(m => m.Verify(IsAny<VerifiedPhrase>()), Times.Never);
-        Assert.AreEqual(0, context.PendingVerifyPhrases.Count());
     }
 
     [TestMethod]
-    public void Verified_RemoveImageIndex_ForwardsIndexAndDoesNotDeletePhraseFile()
+    public async Task Remove_WhenDeleteFails_Returns500()
     {
-        using var context = CreateContext();
+        var firebase = new Mock<IFirebaseService>();
+        firebase.Setup(m => m.DeleteObject(IsAny<string>())).ReturnsAsync(false);
+        var controller = new VerifyController(new Mock<IVerifyService>().Object, firebase.Object);
+
+        var result = await controller.Remove(new PhraseRequest { Phrase = "cat" });
+
+        Assert.AreEqual((int)HttpStatusCode.InternalServerError, Status(result));
+    }
+
+    [TestMethod]
+    public async Task Verified_RemoveImageIndex_RewritesAndDoesNotDeletePhraseFile()
+    {
         var firebase = new Mock<IFirebaseService>();
         var verify = new Mock<IVerifyService>();
-        var controller = new VerifyController(context, verify.Object, firebase.Object);
+        verify.Setup(m => m.Verify(Is<VerifiedPhrase>(phrase =>
+            phrase.Phrase == "cat" && phrase.RemoveImageIndex.SequenceEqual(new[] { 1 }))))
+            .ReturnsAsync(true);
+        var controller = new VerifyController(verify.Object, firebase.Object);
 
-        controller.Verified(new List<VerifiedPhrase>
+        var result = await controller.Verified(new List<VerifiedPhrase>
         {
             new()
             {
@@ -44,23 +55,38 @@ public class VerifyControllerTest : TestBase
             }
         });
 
+        Assert.AreEqual(200, Status(result));
         verify.Verify(m => m.Verify(Is<VerifiedPhrase>(phrase =>
             phrase.Phrase == "cat" && phrase.RemoveImageIndex.SequenceEqual(new[] { 1 }))), Times.Once);
         firebase.Verify(m => m.DeleteObject(IsAny<string>()), Times.Never);
-        Assert.AreEqual(0, context.PendingVerifyPhrases.Count());
     }
 
-    private static DataContext CreateContext()
+    [TestMethod]
+    public async Task Verified_WhenRewriteFails_Returns500()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"verify-controller-{Guid.NewGuid():N}.db");
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+        var verify = new Mock<IVerifyService>();
+        verify.Setup(m => m.Verify(IsAny<VerifiedPhrase>())).ReturnsAsync(false);
+        var controller = new VerifyController(verify.Object, new Mock<IFirebaseService>().Object);
+
+        var result = await controller.Verified(new List<VerifiedPhrase>
+        {
+            new()
             {
-                ["ConnectionStrings:LocalDatabase"] = $"Data Source={path}"
-            })
-            .Build();
-        var context = new DataContext(configuration);
-        context.Database.EnsureCreated();
-        return context;
+                Phrase = "cat",
+                RemoveImageIndex = new List<int> { 1 }
+            }
+        });
+
+        Assert.AreEqual((int)HttpStatusCode.InternalServerError, Status(result));
+    }
+
+    private static int Status(IActionResult result)
+    {
+        if (result is StatusCodeResult status)
+            return status.StatusCode;
+        if (result is ObjectResult obj && obj.StatusCode is int code)
+            return code;
+        Assert.Fail($"Unexpected result {result.GetType().Name}");
+        return 0;
     }
 }

@@ -3,7 +3,7 @@ name: esl-image-programmer
 description: >-
   image-generation-server implementation specialist. Always use proactively when
   the user or planner asks to implement, build, code, apply a plan, fix bugs, or
-  add tests in image-generation-server (API or angular-admin). Do not use for
+  add tests in image-generation-server. Do not use for
   planning-only or other repos.
 model: composer-2.5[]
 readonly: false
@@ -15,7 +15,7 @@ Canonical definition also lives in `image-generation-server/.cursor/agents/`.
 
 ## Scope
 
-- Edit only files under `image-generation-server/` (including `angular-admin/` when in scope).
+- Edit only files under `image-generation-server/`.
 - If the handoff requires another repo, stop and report **Blocked** / cross-repo follow-up.
 
 ## Load stack & conventions (mandatory, before coding)

@@ -48,8 +48,6 @@ spec:
         - name: secret-volume
           mountPath: /etc/secret-volume
           readOnly: true
-        - name: data-volume
-          mountPath: /data
         ports:
         - containerPort: 80
         readinessProbe:
@@ -62,9 +60,6 @@ spec:
       - name: secret-volume
         secret:
           secretName: {{ app_name }}-secrets
-      - name: data-volume
-        persistentVolumeClaim:
-          claimName: {{ app_name }}-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -113,94 +108,4 @@ spec:
             port:
               name: http
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ app_name }}-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 0.5Gi
----
 ######## image-gneration-server (end)
-######## angular-admin (start)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: angular-admin
-  labels:
-    app: angular-admin
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: angular-admin
-  template:
-    metadata:
-      labels:
-        app: angular-admin
-    spec:
-      containers:
-      - name: angular-admin
-        image: thcathy/{{ url_base_path }}-admin:{{ docker_image_tag }}
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 80
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 30
-          timeoutSeconds: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: angular-admin-service
-spec:
-  selector:
-    app: angular-admin
-  ports:
-  - name: http
-    port: 80
-    targetPort: 80
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: angular-admin-prefix-remover
-spec:
-  stripPrefix:
-    prefixes:
-    - /{{ url_base_path }}-admin
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: angular-admin-ingress
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: {{ namespace }}-angular-admin-prefix-remover@kubernetescrd
-spec:
-  ingressClassName: traefik
-  tls:
-  - secretName: angular-admin-tls
-    hosts:
-      - {{ inventory_hostname }}
-  rules:
-  - host: {{ inventory_hostname }}
-    http:
-      paths:
-      - path: /{{ url_base_path }}-admin
-        pathType: Prefix
-        backend:
-          service:
-            name: angular-admin-service
-            port:
-              name: http
----
-######## angular-admin (end)

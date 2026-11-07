@@ -3,7 +3,7 @@ name: esl-image-tester
 description: >-
   image-generation-server test specialist. Always use proactively AFTER review
   (or with review when the user asks to verify/test image-server changes).
-  Adds/updates focused .NET tests (and admin specs only when asked), runs narrow
+  Adds/updates focused .NET tests, runs narrow
   dotnet test commands, and reports gaps. Does not change prompt-model policy.
 model: composer-2.5[]
 readonly: false
@@ -15,7 +15,7 @@ Canonical definition also lives in `image-generation-server/.cursor/agents/`.
 
 ## Scope
 
-- Prefer edits under `ImageGenerationServer.UT/` (and admin specs only if parent includes them).
+- Prefer edits under `ImageGenerationServer.UT/`.
 - Touch production code only when required for testability — keep it tiny and call it out.
 - Do not change other repos.
 - Do not change prompt model / provider defaults without an explicit parent request + decision-doc update.

@@ -31,15 +31,24 @@ public class VerifyService : IVerifyService
 
     public async Task<bool> Verify(VerifiedPhrase phrase)
     {
+        if (string.IsNullOrWhiteSpace(phrase.Phrase))
+            return false;
+
         var imageFilePath = phrase.Phrase.GetImageFilePath();
         var stream = await _firebaseService.DownloadObjectAsync(imageFilePath);
+        if (stream == null)
+            return false;
+
         var imagesObject = JsonSerializer.Deserialize<ImagesObject>(stream);
-        return RewriteWithoutIndexes(imageFilePath, imagesObject!, phrase.RemoveImageIndex);
+        if (imagesObject?.images == null)
+            return false;
+
+        return RewriteWithoutIndexes(imageFilePath, imagesObject, phrase.RemoveImageIndex);
     }
 
     public async Task<ImageRemoveOutcome> RemoveImageAsync(string phrase, int imageIndex)
     {
-        if (string.IsNullOrWhiteSpace(phrase) || imageIndex < 0)
+        if (imageIndex < 0)
             return ImageRemoveOutcome.InvalidIndex;
 
         var imageFilePath = phrase.GetImageFilePath();
@@ -106,6 +115,6 @@ public class VerifyService : IVerifyService
 }
 
 public class VerifiedPhrase {
-    public string Phrase { get; set; }
-    public List<int> RemoveImageIndex { get; set; }
+    public string Phrase { get; set; } = "";
+    public List<int> RemoveImageIndex { get; set; } = new();
 }

@@ -2,7 +2,7 @@
 
 ## Scope
 
-ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.com](https://www.funfunspell.com). Accepts phrase generation requests and writes images to Firebase Storage. New images are available without pending verification. `POST /image/remove` drops one image by index, or deletes the phrase file when that index is the only image. `POST /verify/verified` and `POST /verify/remove` remain. `angular-admin/` no longer runs the keep/remove workflow.
+ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.com](https://www.funfunspell.com). Accepts phrase generation requests and writes images to Firebase Storage. New images are available without a review step. `POST /image/remove` drops one image by index, or deletes the phrase file when that index is the only image. `POST /verify/verified` and `POST /verify/remove` do the same Firebase operations. There is no admin UI and no database.
 
 ## Commands
 
@@ -10,9 +10,6 @@ ASP.NET Core microservice that generates AI vocabulary images for [funfunspell.c
 # API server
 dotnet build ImageGenerationServer/ImageGenerationServer.csproj
 dotnet test ImageGenerationServer.UT/ImageGenerationServer.UT.csproj
-
-# Admin UI (from angular-admin/)
-npm install && npm start
 ```
 
 Health check: `GET /healthz`  
@@ -40,7 +37,7 @@ Generate (requires API key): `POST /image/generate/{phrase}` with header `X-API-
 
 ## Cursor agents & rules
 
-Pipeline: **architect → implementer → reviewer → tester** (plus `esl-uiux` for `angular-admin` visuals)
+Pipeline: **architect → implementer → reviewer → tester**
 
 | Stage | Agent |
 |-------|--------|
@@ -48,7 +45,6 @@ Pipeline: **architect → implementer → reviewer → tester** (plus `esl-uiux`
 | Implementer | `esl-image-programmer` |
 | Reviewer | `esl-image-reviewer` |
 | Tester | `esl-image-tester` |
-| UX (admin) | `esl-uiux` (lives in `esl-ionic/.cursor/agents/` / workspace mirror) |
 
 Committed agents: [`.cursor/agents/`](./.cursor/agents/). They load stack/commands from this file, `.cursor/rules/`, and `CLAUDE.md` (do not hardcode stack in agent prompts).
 

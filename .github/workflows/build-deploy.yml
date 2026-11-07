@@ -55,41 +55,9 @@ jobs:
         file: ImageGenerationServer/Dockerfile
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/image-generation-server:${{ needs.get-version.outputs.docker_image_tag }}
         platforms: linux/arm64,linux/amd64
-  docker-build-admin:
-    strategy:
-      matrix:
-        image_name: [ image-generation-server-uat-admin, image-generation-server-admin ]
-    runs-on: ubuntu-latest
-    needs: [ build-test, get-version]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: angular-admin/package-lock.json
-      - name: npm build
-        working-directory: ./angular-admin
-        run: |
-          npm ci --legacy-peer-deps
-          npm run build --production -- --base-href=/${{ matrix.image_name }}/
-      - uses: docker/setup-qemu-action@v2
-      - uses: docker/setup-buildx-action@v2
-      - uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: docker/build-push-action@v3
-        with:
-          push: true
-          context: ./angular-admin
-          file: angular-admin/Dockerfile
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image_name }}:latest,${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image_name }}:${{ needs.get-version.outputs.docker_image_tag }}
-          platforms: linux/arm64,linux/amd64
   deploy-k8s-uat:
     runs-on: ubuntu-latest
-    needs: [get-version, docker-build-server, docker-build-admin]
+    needs: [get-version, docker-build-server]
     steps:
       - uses: actions/checkout@v6
       - name: Run ansible playbook to deploy and verify k8s UAT

@@ -14,7 +14,7 @@ public class ImageGenerationServiceOptions
 
 public class ImagesObject
 {
-    public string[] images { get; set; }
+    public string[] images { get; set; } = Array.Empty<string>();
     public bool isVerify { get; set; }
 }
 

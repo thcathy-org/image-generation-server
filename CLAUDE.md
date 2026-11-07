@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## About
 
-ASP.NET Core 7 microservice for AI vocabulary image generation on [funfunspell.com](https://www.funfunspell.com). Prompts via Replicate LLM; pixels via LocalAI Flux (default) or Replicate Flux; storage in Google Firebase. SQLite tracks phrases pending human verification.
+ASP.NET Core 7 microservice for AI vocabulary image generation on [funfunspell.com](https://www.funfunspell.com). Prompts via Replicate LLM; pixels via LocalAI Flux (default) or Replicate Flux; storage in Google Firebase.
 
 ## Commands
 
@@ -15,9 +15,6 @@ dotnet test ImageGenerationServer.UT/ImageGenerationServer.UT.csproj
 
 # Run API (from repo root)
 dotnet run --project ImageGenerationServer/ImageGenerationServer.csproj
-
-# Admin UI
-cd angular-admin && npm install && npm start   # http://localhost:4200
 ```
 
 Tests use MSTest + Moq + MockHttp in `ImageGenerationServer.UT/`.
@@ -45,11 +42,9 @@ Agent entry point: [AGENTS.md](./AGENTS.md).
 ```
 ImageGenerationServer/          # ASP.NET Core API + background worker
   Controllers/                  # ImageController, VerifyController
-  Services/                     # Generation, Replicate, LocalAI, Firebase, Verify
-  DB/                           # EF Core + SQLite (pending verify phrases)
+  Services/                     # Generation, Replicate, LocalAI, Firebase, image remove
   Middleware/                   # ApiKeyMiddleware
 ImageGenerationServer.UT/       # Unit tests
-angular-admin/                  # Angular 16 admin UI; pending-verify keep/remove workflow is retired
 ansible/                        # K8s deploy
 ```
 
@@ -62,9 +57,8 @@ ansible/                        # K8s deploy
    - For each prompt, generates image via provider selected by **`ImageGenerationServiceOptions.ImageProvider`**:
      - `localai` (default) → **`LocalAiImageService`** → LocalAI `flux.2-klein-4b`
      - `replicate` → **`ReplicateAiService.GenerateImageFromPrompt`**
-   - Uploads JSON `{ images: [base64...], isVerify: false }` to Firebase
-   - Does **not** insert `PendingVerifyPhrases`. New images are available without a pending-verify / Submit Verified step. Clients ignore `isVerify`; this service does not bulk-rewrite existing Firebase JSON to flip it.
-3. **Remove APIs** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. Invalid phrase or index returns 4xx. `POST /verify/verified` with `removeImageIndex` and `POST /verify/remove` remain. `GET /verify/pending` and `GET /verify/total` remain but are not a show-gate. The angular admin keep/remove page is retired. This service has no report queue.
+   - Uploads JSON `{ images: [base64...], isVerify: false }` to Firebase. New images are available without a review step. This service does not bulk-rewrite existing Firebase JSON to flip `isVerify`.
+3. **Remove** — `POST /image/remove` with `{ phrase, imageIndex }` drops that index when other images remain, and deletes the phrase file when that index is the only image. Success is returned only after the Firebase write or delete succeeds. Invalid phrase or index returns 4xx. `POST /verify/verified` and `POST /verify/remove` remain as the same Firebase operations. There is no database and no admin UI.
 
 Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFilePath`).
 
@@ -75,8 +69,8 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 | `ReplicateAiService` | LLM prompts + optional Replicate Flux image generation |
 | `LocalAiImageService` | LocalAI Flux image generation (default pixel provider) |
 | `FirebaseService` | Upload/download/delete JSON objects in GCS bucket |
-| `VerifyService` | Index-remove. `POST /image/remove` rewrites one phrase file or deletes it when the index is the only image. `POST /verify/verified` still rewrites by `removeImageIndex` |
-| `ImageGenerationService` | Background queue processor. Uploads new images; does not enqueue pending verify |
+| `VerifyService` | `POST /image/remove` rewrites one phrase file or deletes it when the index is the only image. `POST /verify/verified` rewrites by `removeImageIndex` |
+| `ImageGenerationService` | Background queue processor. Uploads new images |
 
 ### API endpoints
 
@@ -84,11 +78,9 @@ Firebase path: `{first-two-chars}/{slug}.json` (see `StringExtension.GetImageFil
 |--------|------|---------|
 | POST | `/image/generate/{phrase}` | Enqueue phrase for generation |
 | POST | `/image/remove` | Drop `imageIndex`, or delete the phrase file when it is the only image |
-| GET | `/verify/total` | Count leftover pending-verify rows (not required for images to show) |
-| GET | `/verify/pending?max=20` | List leftover pending phrases (not a show-gate) |
 | POST | `/verify/verified` | Remove images by `removeImageIndex`; other images stay |
 | POST | `/verify/remove` | Delete the phrase file from Firebase |
-| GET | `/healthz` | Health check (includes SQLite) |
+| GET | `/healthz` | Health check |
 
 All routes except `/healthz` require **`X-API-KEY`** header (see `ApiKeyMiddleware`).
 
@@ -101,7 +93,6 @@ All routes except `/healthz` require **`X-API-KEY`** header (see `ApiKeyMiddlewa
 | `LocalAiImageServiceOptions` | `BaseUrl`, `ApiKey`, `ImageModel`, `Size`, `RequestTimeoutSeconds` |
 | `FirebaseServiceOptions` | `BucketName`, `FirebaseBaseFolder` |
 | `ApiKeyMiddlewareOptions` | `ApiKeys`, `ApiKeyHeaderName` |
-| `ConnectionStrings:LocalDatabase` | SQLite path for pending verify DB |
 
 Environment overrides use `__` separator (e.g. `ReplicateAiServiceOptions__Token`).
 
@@ -129,7 +120,6 @@ Do not change prompt model without eval and updating the decision doc.
 
 - Docker + Kubernetes via `ansible/`
 - GitHub Actions: `.github/workflows/build-deploy.yml`
-- CORS allows `localhost:4200` and `localhost:44351` for admin UI dev
 
 ### Testing patterns
 
